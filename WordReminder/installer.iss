@@ -54,7 +54,6 @@ UninstallProgram=卸载 [name]
 
 [Code]
 var
-  OldVersion: String;
   OldInstallPath: String;
 
 function InitializeSetup(): Boolean;
@@ -63,32 +62,27 @@ var
   RegSubKey: String;
 begin
   Result := True;
+  OldInstallPath := '';
 
-  // 检查是否已安装旧版本
+  // 检查是否已安装旧版本，获取安装路径
   RegSubKey := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{A1B2C3D4-E5F6-4A5B-8C9D-1E2F3A4B5C6D}_is1';
 
   if RegQueryStringValue(HKLM, RegSubKey, 'DisplayVersion', RegQueryString) then
   begin
-    OldVersion := RegQueryString;
-
     // 获取旧版本的安装路径
     if RegQueryStringValue(HKLM, RegSubKey, 'InstallLocation', RegQueryString) then
     begin
       OldInstallPath := RegQueryString;
-
-      // 设置向导的默认目录为旧版本的安装路径
-      WizardForm.DirEdit.Text := OldInstallPath;
     end;
+  end;
+end;
 
-    // 显示提示信息
-    if MsgBox('检测到已安装 ' + OldVersion + ' 版本的 ' + #13#10 + #13#10 +
-                '点击"是"将覆盖安装到同一目录' + #13#10 +
-                '点击"否"将取消安装，请先手动卸载旧版本' + #13#10 + #13#10 +
-                '是否继续安装？',
-                mbConfirmation, MB_YESNO) = IDNO then
-    begin
-      Result := False;
-    end;
+// 在选择目录页面设置默认路径
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if (CurPageID = wpSelectDir) and (OldInstallPath <> '') then
+  begin
+    WizardForm.DirEdit.Text := OldInstallPath;
   end;
 end;
 
