@@ -2,7 +2,7 @@
 ; 使用 Inno Setup Compiler 编译此脚本生成安装包
 
 #define AppName "WordReminder"
-#define AppVersion "1.0.1"
+#define AppVersion "1.0.2"
 #define AppPublisher "GoodZheng"
 #define AppURL "https://github.com/GoodZheng/WordReminder"
 #define AppExeName "WordReminder.exe"
