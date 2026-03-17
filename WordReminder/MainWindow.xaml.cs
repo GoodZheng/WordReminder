@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using WordReminder.Models;
 using WordReminder.Services;
 using System.Linq;
+using System.Windows.Interop;
 using Screen = System.Windows.Forms.Screen;
 
 namespace WordReminder;
@@ -19,12 +20,17 @@ public partial class MainWindow : Window
     private int _currentIndex = 0;
     private DispatcherTimer? _timer;
     private bool _isPlaying = true;
+    private HwndSource? _hwndSource;
 
     // 预置单词列表
     private readonly string[] _defaultWords = new[]
     {
         "ability"
     };
+
+    // 禁用 Windows 11 的 Snap Layouts
+    private const int WM_NCHITTEST = 0x0084;
+    private const int HTCLIENT = 1;
 
     public MainWindow()
     {
@@ -33,7 +39,29 @@ public partial class MainWindow : Window
         _configService = new ConfigService();
         _aiService = new AIDictionaryService(_configService);
 
+        // 禁用 Windows 11 的 Snap Layouts
+        this.SourceInitialized += (s, e) =>
+        {
+            _hwndSource = PresentationSource.FromVisual(this) as HwndSource;
+            if (_hwndSource != null)
+            {
+                _hwndSource.AddHook(WndProc);
+            }
+        };
+
         Loaded += async (_, _) => await InitializeAsync();
+    }
+
+    // 窗口过程处理，禁用 Snap Layouts
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (msg == WM_NCHITTEST)
+        {
+            // 始终返回 HTCLIENT，禁用窗口边缘的布局功能
+            handled = true;
+            return new IntPtr(HTCLIENT);
+        }
+        return IntPtr.Zero;
     }
 
     private async Task InitializeAsync()
@@ -424,6 +452,11 @@ public partial class MainWindow : Window
     // 窗口关闭时保存位置
     private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {
+        if (_hwndSource != null)
+        {
+            _hwndSource.RemoveHook(WndProc);
+            _hwndSource = null;
+        }
         SaveWindowPosition();
     }
 

@@ -11,6 +11,15 @@
         SizeChanged="Window_SizeChanged"
         LocationChanged="Window_LocationChanged">
 
+    <WindowChrome.WindowChrome>
+        <WindowChrome
+            CaptionHeight="0"
+            ResizeBorderThickness="0"
+            UseAeroCaptionButtons="False"
+            NonClientFrameEdges="None"
+            GlassFrameThickness="0" />
+    </WindowChrome.WindowChrome>
+
     <Border x:Name="MainBorder"
             Background="Transparent"
             CornerRadius="8"
