@@ -194,7 +194,6 @@ build.bat
 ## 👨‍💻 开发者
 
 - **GoodZheng** - [GitHub](https://github.com/GoodZheng)
-- 北京信息科技大学
 
 ---
 
