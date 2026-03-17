@@ -12,7 +12,13 @@ public class ConfigService
 
     public ConfigService()
     {
-        _configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+        // 使用用户目录存储配置，避免权限问题
+        var dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WordReminder");
+        if (!Directory.Exists(dataDir))
+        {
+            Directory.CreateDirectory(dataDir);
+        }
+        _configPath = Path.Combine(dataDir, "appsettings.json");
         _settings = LoadOrMigrateSettings();
     }
 

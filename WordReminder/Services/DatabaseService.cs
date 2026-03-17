@@ -11,7 +11,13 @@ public class DatabaseService
 
     public DatabaseService()
     {
-        _dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "words.db");
+        // 使用用户目录存储数据，避免权限问题
+        var dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WordReminder");
+        if (!Directory.Exists(dataDir))
+        {
+            Directory.CreateDirectory(dataDir);
+        }
+        _dbPath = Path.Combine(dataDir, "words.db");
         _connectionString = $"Data Source={_dbPath}";
         InitializeDatabase();
     }

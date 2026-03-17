@@ -48,6 +48,15 @@
 
 ## 🚀 安装方式
 
+> ⚠️ **关于 SmartScreen 警告**
+>
+> 首次运行时，Windows 可能会显示 "Windows 已保护你的电脑" 的 SmartScreen 警告。这是因为本软件未进行商业代码签名（个人开源项目常见情况）。
+>
+> **解决方法**：
+> 1. 点击 "更多信息"
+> 2. 点击 "仍要运行"
+> 3. 安装完成后不会再出现此警告
+
 ### 方式一：安装包（推荐）
 
 下载 [WordReminder-Setup-1.0.0.exe](https://github.com/GoodZheng/WordReminder/releases/download/v1.0.0/WordReminder-Setup-1.0.0.exe) 运行安装程序
