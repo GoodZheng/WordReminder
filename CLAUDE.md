@@ -22,6 +22,8 @@ dotnet run --project WordReminder
 dotnet clean WordReminder.slnx
 ```
 
+**构建安装包**: 参见 [BUILD.md](BUILD.md) 获取详细的安装包构建指南。
+
 ## 架构
 
 ### 技术栈
