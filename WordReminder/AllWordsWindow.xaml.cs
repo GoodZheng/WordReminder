@@ -23,11 +23,20 @@ public partial class AllWordsWindow : Window
         _databaseService = new DatabaseService();
         _configService = new ConfigService();
         _aiService = new AIDictionaryService(_configService);
+
+        Loaded += Window_Loaded;
+        Activated += Window_Activated;
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
         LoadWords();
+    }
+
+    private void Window_Activated(object? sender, EventArgs e)
+    {
+        // 窗口激活时重新加载配置，获取最新的 API key
+        _configService.ReloadSettings();
     }
 
     private void LoadWords()

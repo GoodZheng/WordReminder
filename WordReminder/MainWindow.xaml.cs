@@ -51,6 +51,7 @@ public partial class MainWindow : Window
         };
 
         Loaded += async (_, _) => await InitializeAsync();
+        Activated += (_, _) => _configService.ReloadSettings();
     }
 
     // 窗口过程处理，禁用 Snap Layouts

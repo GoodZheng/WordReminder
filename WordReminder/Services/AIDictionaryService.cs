@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Security.Cryptography;
 using WordReminder.Models;
 
 namespace WordReminder.Services;
@@ -15,6 +16,69 @@ public class AIDictionaryService
         _configService = configService;
         _httpClient = new HttpClient();
         _httpClient.Timeout = TimeSpan.FromSeconds(30);
+    }
+
+    /// <summary>
+    /// 为智谱 AI 生成 JWT token
+    /// </summary>
+    private string GenerateZhipuToken(string apiKey)
+    {
+        try
+        {
+            var parts = apiKey.Split('.');
+            if (parts.Length != 2)
+            {
+                Console.WriteLine($"[AI] 智谱 API Key 格式不正确");
+                return apiKey;
+            }
+
+            var id = parts[0];
+            var secret = parts[1];
+
+            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var exp = timestamp + 3600; // 1小时后过期
+
+            var payload = new
+            {
+                api_key = id,
+                exp = exp,
+                timestamp = timestamp
+            };
+
+            var header = new
+            {
+                alg = "HS256",
+                sign_type = "SIGN"
+            };
+
+            var headerBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(header));
+            var payloadBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload));
+
+            var headerBase64 = Base64UrlEncode(headerBytes);
+            var payloadBase64 = Base64UrlEncode(payloadBytes);
+
+            var message = $"{headerBase64}.{payloadBase64}";
+            var messageBytes = Encoding.UTF8.GetBytes(message);
+
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+            var signature = hmac.ComputeHash(messageBytes);
+            var signatureBase64 = Base64UrlEncode(signature);
+
+            return $"{message}.{signatureBase64}";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AI] 生成智谱 token 失败: {ex.Message}");
+            return apiKey;
+        }
+    }
+
+    private string Base64UrlEncode(byte[] input)
+    {
+        return Convert.ToBase64String(input)
+            .Replace('+', '-')
+            .Replace('/', '_')
+            .TrimEnd('=');
     }
 
     public async Task<Word?> GetWordInfoAsync(string wordText)
@@ -67,9 +131,23 @@ public class AIDictionaryService
 
             // 设置请求头
             _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {config.ApiKey}");
+
+            // 根据提供商使用不同的认证方式
+            string authToken = config.ApiKey;
+            if (config.Provider == "zhipuai")
+            {
+                // 智谱 AI 需要生成 JWT token
+                authToken = GenerateZhipuToken(config.ApiKey);
+                _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {authToken}");
+            }
+            else
+            {
+                // 其他提供商使用标准 Bearer token
+                _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {config.ApiKey}");
+            }
 
             Console.WriteLine($"[AI] 正在调用 {config.Provider} API: {config.ApiUrl}");
+            Console.WriteLine($"[AI] 使用模型: {config.Model}");
 
             // 发送请求
             var response = await _httpClient.PostAsync(config.ApiUrl, content);
@@ -131,7 +209,7 @@ public class AIDictionaryService
 
     private string ExtractAIContent(JsonElement jsonResponse, string provider)
     {
-        // 通用格式：choices[0].message.content (OpenAI 兼容格式)
+        // OpenAI / 智谱 AI 兼容格式：choices[0].message.content
         if (jsonResponse.TryGetProperty("choices", out var choices) &&
             choices.GetArrayLength() > 0)
         {
@@ -154,6 +232,12 @@ public class AIDictionaryService
                     return content.GetString() ?? string.Empty;
                 }
             }
+        }
+
+        // 直接返回 content（某些简单格式）
+        if (jsonResponse.TryGetProperty("content", out var directContent))
+        {
+            return directContent.GetString() ?? string.Empty;
         }
 
         return string.Empty;

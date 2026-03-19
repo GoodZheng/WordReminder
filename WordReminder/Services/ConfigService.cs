@@ -24,6 +24,29 @@ public class ConfigService
 
     public AppSettings Settings => _settings;
 
+    /// <summary>
+    /// 重新从文件加载配置
+    /// </summary>
+    public void ReloadSettings()
+    {
+        if (File.Exists(_configPath))
+        {
+            try
+            {
+                var json = File.ReadAllText(_configPath);
+                var settings = JsonSerializer.Deserialize<AppSettings>(json);
+                if (settings != null)
+                {
+                    _settings = settings;
+                }
+            }
+            catch
+            {
+                // 读取失败，保持现有配置
+            }
+        }
+    }
+
     private AppSettings LoadOrMigrateSettings()
     {
         if (File.Exists(_configPath))

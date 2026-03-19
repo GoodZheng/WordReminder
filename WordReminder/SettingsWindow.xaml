@@ -47,6 +47,25 @@
                             <Slider x:Name="OpacitySlider" Minimum="0.3" Maximum="1.0" Value="1.0" TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="0,5"/>
                         </StackPanel>
 
+                        <Separator Margin="0,15"/>
+
+                        <TextBlock Text="AI 词典配置" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                        <!-- API URL -->
+                        <TextBlock Text="API URL" Margin="0,5"/>
+                        <TextBox x:Name="ApiUrlTextBox" Margin="0,5" Height="32" FontSize="12"/>
+                        <TextBlock Text="AI 服务的 API 地址" FontSize="11" Foreground="Gray" Margin="0,0,0,5"/>
+
+                        <!-- Model -->
+                        <TextBlock Text="模型名称" Margin="0,5"/>
+                        <TextBox x:Name="ModelTextBox" Margin="0,5" Height="32" FontSize="12"/>
+                        <TextBlock Text="AI 模型的 ID 或名称" FontSize="11" Foreground="Gray" Margin="0,0,0,5"/>
+
+                        <!-- API Key -->
+                        <TextBlock Text="API Key" Margin="0,5"/>
+                        <PasswordBox x:Name="ApiKeyPasswordBox" Margin="0,5" PasswordChar="•" Height="32" FontSize="12"/>
+                        <TextBlock Text="用于 AI 词典服务的 API 密钥" FontSize="11" Foreground="Gray" Margin="0,0,0,5"/>
+
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

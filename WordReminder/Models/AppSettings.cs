@@ -51,9 +51,9 @@ public class AppSettings
 public class AIDictionarySettings
 {
     public bool Enabled { get; set; } = true;
-    public string Provider { get; set; } = "zhipuai";  // zhipuai, openai, dashscope
-    public string ApiUrl { get; set; } = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
+    public string Provider { get; set; } = "dashscope";  // dashscope, zhipuai, openai
+    public string ApiUrl { get; set; } = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
     public string ApiKey { get; set; } = "";
-    public string Model { get; set; } = "glm-4-flash";
+    public string Model { get; set; } = "qwen-plus";
     public string SystemPrompt { get; set; } = "你是专业的英汉词典助手。请严格按照JSON格式返回单词信息。";
 }

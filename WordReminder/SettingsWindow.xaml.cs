@@ -58,6 +58,15 @@ public partial class SettingsWindow : Window
         AlwaysOnTopCheckBox.IsChecked = settings.AlwaysOnTop;
         AutoStartCheckBox.IsChecked = settings.AutoStart;
 
+        // AI 配置
+        var aiConfig = settings.AIDictionary;
+        if (aiConfig != null)
+        {
+            ApiUrlTextBox.Text = aiConfig.ApiUrl ?? "";
+            ModelTextBox.Text = aiConfig.Model ?? "";
+            ApiKeyPasswordBox.Password = aiConfig.ApiKey ?? "";
+        }
+
         // 自动更新
         AutoUpdateCheckBox.IsChecked = settings.AutoUpdate;
 
@@ -151,6 +160,15 @@ public partial class SettingsWindow : Window
             s.AlwaysOnTop = AlwaysOnTopCheckBox.IsChecked ?? true;
             s.AutoStart = AutoStartCheckBox.IsChecked ?? false;
             s.AutoUpdate = AutoUpdateCheckBox.IsChecked ?? true;
+
+            // AI 配置
+            if (s.AIDictionary == null)
+            {
+                s.AIDictionary = new Models.AIDictionarySettings();
+            }
+            s.AIDictionary.ApiUrl = ApiUrlTextBox.Text;
+            s.AIDictionary.Model = ModelTextBox.Text;
+            s.AIDictionary.ApiKey = ApiKeyPasswordBox.Password;
 
             // 显示开关
             s.ShowPhonetic = ShowPhoneticCheckBox.IsChecked ?? true;
