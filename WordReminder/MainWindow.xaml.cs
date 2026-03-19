@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     private DispatcherTimer? _timer;
     private bool _isPlaying = true;
     private HwndSource? _hwndSource;
+    private bool _isInitializing = false;  // 标记是否正在初始化
 
     // 预置单词列表
     private readonly string[] _defaultWords = new[]
@@ -144,7 +145,10 @@ public partial class MainWindow : Window
 
     private void ApplySettings()
     {
-        var settings = _configService.Settings;
+        _isInitializing = true;  // 开始初始化，禁用位置保存
+        try
+        {
+            var settings = _configService.Settings;
 
         // 检查窗口位置是否在有效屏幕范围内（处理外接显示器断开的情况）
         var savedRect = new Rect(settings.WindowPositionX, settings.WindowPositionY,
@@ -215,6 +219,11 @@ public partial class MainWindow : Window
         ExampleText.FontSize = settings.ExampleFontSize;
         ExampleText.FontFamily = new System.Windows.Media.FontFamily(settings.ExampleFontFamily);
         ExampleText.Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(settings.ExampleFontColor));
+        }
+        finally
+        {
+            _isInitializing = false;  // 初始化完成，恢复位置保存
+        }
     }
 
     private void StartTimer()
@@ -475,16 +484,35 @@ public partial class MainWindow : Window
         SaveWindowPosition();
     }
 
+    private DispatcherTimer? _savePositionTimer;
+
     private void SaveWindowPosition()
     {
+        // 初始化期间不保存位置
+        if (_isInitializing)
+            return;
+
         // 只有当窗口正常显示时才保存位置
-        if (WindowState == WindowState.Normal)
+        if (WindowState != WindowState.Normal)
+            return;
+
+        // 检查值是否有效（非NaN、非Infinity）
+        if (double.IsNaN(Left) || double.IsInfinity(Left) ||
+            double.IsNaN(Top) || double.IsInfinity(Top) ||
+            double.IsNaN(Width) || double.IsInfinity(Width) || Width <= 0 ||
+            double.IsNaN(Height) || double.IsInfinity(Height) || Height <= 0)
+            return;
+
+        // 使用防抖机制，避免频繁写入文件
+        _savePositionTimer?.Stop();
+        _savePositionTimer = new DispatcherTimer
         {
-            // 检查值是否有效（非NaN、非Infinity）
-            if (!double.IsNaN(Left) && !double.IsInfinity(Left) &&
-                !double.IsNaN(Top) && !double.IsInfinity(Top) &&
-                !double.IsNaN(Width) && !double.IsInfinity(Width) && Width > 0 &&
-                !double.IsNaN(Height) && !double.IsInfinity(Height) && Height > 0)
+            Interval = TimeSpan.FromMilliseconds(500)  // 500ms 后才真正保存
+        };
+        _savePositionTimer.Tick += (s, e) =>
+        {
+            _savePositionTimer?.Stop();
+            try
             {
                 _configService.UpdateSettings(s =>
                 {
@@ -494,6 +522,11 @@ public partial class MainWindow : Window
                     s.WindowHeight = Height;
                 });
             }
-        }
+            catch
+            {
+                // 忽略保存错误，避免拖动时崩溃
+            }
+        };
+        _savePositionTimer.Start();
     }
 }

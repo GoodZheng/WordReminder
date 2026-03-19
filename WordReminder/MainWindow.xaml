@@ -9,7 +9,8 @@
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
         Closing="Window_Closing"
         SizeChanged="Window_SizeChanged"
-        LocationChanged="Window_LocationChanged">
+        LocationChanged="Window_LocationChanged"
+        ResizeMode="NoResize">
 
     <WindowChrome.WindowChrome>
         <WindowChrome

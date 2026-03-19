@@ -2,8 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="添加单词"
-        Width="350"
-        Height="180"
+        Width="350" MaxWidth="350"
+        Height="180" MaxHeight="180"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">
 
