@@ -159,10 +159,11 @@ public class UpdateService
             // 查找合适的安装包（.exe 或 .zip）
             foreach (var asset in assets)
             {
-                var name = asset["name"]?.ToString()?.ToLower() ?? "";
+                var nameNode = asset?["name"];
+                var name = nameNode?.ToString()?.ToLower() ?? "";
                 if (name.EndsWith(".exe") || name.EndsWith(".zip"))
                 {
-                    return asset["browser_download_url"]?.ToString();
+                    return asset?["browser_download_url"]?.ToString();
                 }
             }
         }

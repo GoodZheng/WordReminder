@@ -1,4 +1,4 @@
-<Window x:Class="WordReminder.AddWordWindow"
+<Window x:Class="WordReminder.Views.AddWordWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="添加单词"
@@ -21,7 +21,7 @@
                  Height="30"
                  VerticalContentAlignment="Center"
                  Padding="5,0"
-                 KeyDown="WordInput_KeyDown"/>
+                 Text="{Binding WordText, UpdateSourceTrigger=PropertyChanged}"/>
 
         <StackPanel Grid.Row="2"
                     Orientation="Horizontal"
@@ -31,12 +31,12 @@
                     Width="70"
                     Height="25"
                     Margin="0,0,10,0"
-                    Click="Ok_Click"
+                    Command="{Binding OkCommand}"
                     IsDefault="True"/>
             <Button Content="取消"
                     Width="70"
                     Height="25"
-                    Click="Cancel_Click"
+                    Command="{Binding CancelCommand}"
                     IsCancel="True"/>
         </StackPanel>
     </Grid>

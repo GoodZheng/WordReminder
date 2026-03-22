@@ -46,6 +46,9 @@ public class AppSettings
 
     // 自动更新
     public bool AutoUpdate { get; set; } = true;
+
+    // 全局快捷键设置
+    public HotKeySettings HotKeys { get; set; } = new();
 }
 
 public class AIDictionarySettings

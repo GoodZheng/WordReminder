@@ -1,0 +1,109 @@
+<Window x:Class="WordReminder.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:WordReminder.Converters"
+        Title="WordReminder"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowStyle="None"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        Left="{Binding WindowLeft, Mode=TwoWay}"
+        Top="{Binding WindowTop, Mode=TwoWay}"
+        Width="{Binding WindowWidth, Mode=TwoWay}"
+        Height="{Binding WindowHeight, Mode=TwoWay}"
+        Topmost="{Binding AlwaysOnTop}"
+        Opacity="{Binding WindowOpacity}">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome
+            CaptionHeight="0"
+            ResizeBorderThickness="0"
+            UseAeroCaptionButtons="False"
+            NonClientFrameEdges="None"
+            GlassFrameThickness="0" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <!-- 字符串转画刷转换器 -->
+        <converters:StringToBrushConverter x:Key="StringToBrushConverter"/>
+        <!-- 布尔值转可见性转换器 -->
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
+
+    <Border x:Name="MainBorder"
+            Background="Transparent"
+            CornerRadius="8"
+            Padding="20">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 第一行：单词 + 音标 -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+                <TextBlock Text="{Binding WordText}"
+                           FontSize="{Binding WordFontSize}"
+                           FontWeight="Bold"
+                           Foreground="{Binding WordFontColor, Converter={StaticResource StringToBrushConverter}}"
+                           FontFamily="{Binding WordFontFamily}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"/>
+
+                <TextBlock Text="{Binding PhoneticText}"
+                           FontSize="{Binding PhoneticFontSize}"
+                           Foreground="{Binding PhoneticFontColor, Converter={StaticResource StringToBrushConverter}}"
+                           FontFamily="{Binding PhoneticFontFamily}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Margin="10,0,0,0"
+                           Visibility="{Binding ShowPhonetic, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            </StackPanel>
+
+            <!-- 第二行：词性和释义 -->
+            <TextBlock Text="{Binding DefinitionText}"
+                       Grid.Row="1"
+                       FontSize="{Binding DefinitionFontSize}"
+                       Foreground="{Binding DefinitionFontColor, Converter={StaticResource StringToBrushConverter}}"
+                       FontFamily="{Binding DefinitionFontFamily}"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       Visibility="{Binding ShowDefinition, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+            <!-- 第三行：例句 -->
+            <TextBlock Text="{Binding ExampleText}"
+                       Grid.Row="2"
+                       FontSize="{Binding ExampleFontSize}"
+                       Foreground="{Binding ExampleFontColor, Converter={StaticResource StringToBrushConverter}}"
+                       FontFamily="{Binding ExampleFontFamily}"
+                       FontStyle="Italic"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       Margin="0,10,0,0"
+                       Visibility="{Binding ShowExample, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        </Grid>
+    </Border>
+
+    <Window.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="播放/暂停" Command="{Binding PlayPauseCommand}"/>
+            <MenuItem Header="上一个" Command="{Binding PreviousWordCommand}"/>
+            <MenuItem Header="下一个" Command="{Binding NextWordCommand}"/>
+            <Separator/>
+            <MenuItem Header="添加单词..." Command="{Binding AddWordCommand}"/>
+            <MenuItem Header="所有单词..." Command="{Binding ShowAllWordsCommand}"/>
+            <Separator/>
+            <MenuItem Header="翻译" Command="{Binding OpenTranslationCommand}"/>
+            <Separator/>
+            <MenuItem Header="设置..." Command="{Binding OpenSettingsCommand}"/>
+            <Separator/>
+            <MenuItem Header="退出" Command="{Binding ExitCommand}"/>
+        </ContextMenu>
+    </Window.ContextMenu>
+
+</Window>
