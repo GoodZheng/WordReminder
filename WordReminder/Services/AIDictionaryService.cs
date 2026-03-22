@@ -15,7 +15,7 @@ public class AIDictionaryService
     {
         _configService = configService;
         _httpClient = new HttpClient();
-        _httpClient.Timeout = TimeSpan.FromSeconds(30);
+        _httpClient.Timeout = TimeSpan.FromSeconds(90);
     }
 
     /// <summary>
