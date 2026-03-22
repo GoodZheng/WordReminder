@@ -3,7 +3,7 @@
 ## 前置要求
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Inno Setup Compiler](https://jrsoftware.org/isdl.php) - 仅构建安装包时需要
+- [Inno Setup Compiler](https://jrsoftware.org/isdl.php)
 
 ## 发布方式
 
@@ -11,20 +11,17 @@
 
 | 方式 | 文件名 | 说明 |
 |------|--------|------|
-| **绿色版（推荐）** | `WordReminder-portable-{版本号}.exe` | 单文件免安装，直接运行 |
-| 安装包 | `WordReminder-Setup-{版本号}.exe` | 带安装向导，支持开始菜单快捷方式 |
+| **安装版（推荐）** | `WordReminder-Setup-{版本号}.exe` | 带安装向导，自动创建开始菜单快捷方式 |
+| 绿色版 | `WordReminder-portable-{版本号}.exe` | 单文件免安装，直接运行 |
 
 ## 快速构建
 
 ```bash
-# 构建绿色版（推荐）
-build-portable.bat
-
-# 构建安装包
-build-installer.bat
-
-# 或使用通用脚本（同时构建两种版本）
+# 构建安装版和绿色版
 build.bat
+
+# 仅构建绿色版
+build-portable.bat
 ```
 
 ## 手动构建
@@ -45,16 +42,7 @@ dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true 
 - `-o "../publish"` - 输出目录
 - `-p:DebugType=None -p:DebugSymbols=false` - 移除调试信息减小体积
 
-### 2. 制作绿色版
-
-```bash
-# 复制并重命名为绿色版
-copy publish\WordReminder.exe release\WordReminder-portable-1.0.5.exe
-```
-
-绿色版即单文件发布的 exe，无需安装，直接双击运行。
-
-### 3. 编译安装包（可选）
+### 2. 制作安装版
 
 使用 Inno Setup Compiler 编译 `WordReminder/installer.iss`：
 
@@ -64,15 +52,23 @@ copy publish\WordReminder.exe release\WordReminder-portable-1.0.5.exe
 
 或使用图形界面打开 `WordReminder/installer.iss` 文件编译。
 
+### 3. 制作绿色版
+
+```bash
+# 复制并重命名为绿色版
+copy publish\WordReminder.exe release\WordReminder-portable-1.0.5.exe
+```
+
+绿色版即单文件发布的 exe，无需安装，直接双击运行。
+
 ## 输出文件
 
 ```
 release/
-├── WordReminder-portable-{版本号}.exe    # 绿色版（推荐）
-└── WordReminder-Setup-{版本号}.exe        # 安装包（可选）
+└── WordReminder-portable-{版本号}.exe    # 绿色版
 
 installer/
-└── WordReminder-Setup-{版本号}.exe        # 安装包编译输出
+└── WordReminder-Setup-{版本号}.exe        # 安装版
 ```
 
 ## 版本号更新
@@ -86,20 +82,22 @@ installer/
    <FileVersion>1.0.5</FileVersion>
    ```
 
-2. **WordReminder/installer.iss**（仅构建安装包时需要）
+2. **WordReminder/installer.iss**
    ```iss
    #define AppVersion "1.0.5"
    ```
 
 ## 发布流程
 
-1. 更新版本号（.csproj 和可选的 installer.iss）
+1. 更新版本号（.csproj 和 installer.iss）
 2. 提交代码到 Git
 3. 创建 Git tag：`git tag v1.0.5`
-4. 构建绿色版：`build-portable.bat`
-5. 测试绿色版运行
+4. 运行构建脚本：`build.bat`
+5. 测试安装版和绿色版
 6. 推送到 GitHub：`git push origin main --tags`
-7. 在 GitHub Releases 发布并上传 `release/WordReminder-portable-{版本号}.exe`
+7. 在 GitHub Releases 发布并上传：
+   - `installer/WordReminder-Setup-{版本号}.exe`（推荐）
+   - `release/WordReminder-portable-{版本号}.exe`
 
 ## 常见问题
 
@@ -116,7 +114,7 @@ taskkill /F /IM WordReminder.exe
 dotnet clean
 ```
 
-### 绿色版无法运行
+### 安装包/绿色版无法运行
 
 确保使用自包含发布模式（`--self-contained`），生成的 exe 文件大小应约 168 MB。
 
@@ -124,4 +122,4 @@ dotnet clean
 
 ### Windows Defender 警告
 
-绿色版单文件可能被 Windows Defender 误报，需要添加信任或允许运行。
+单文件可能被 Windows Defender 误报，需要添加信任或允许运行。
