@@ -437,26 +437,12 @@ public partial class MainWindow : Window
         settingsWindow.ShowDialog();
     }
 
-    private async void Translate_Click(object sender, RoutedEventArgs e)
+    private void Translate_Click(object sender, RoutedEventArgs e)
     {
-        if (_words.Count == 0 || _currentIndex >= _words.Count)
-        {
-            System.Windows.MessageBox.Show("当前没有可翻译的单词", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-
-        var currentWord = _words[_currentIndex];
-
-        // 直接使用数据库中的释义
-        if (!string.IsNullOrEmpty(currentWord.Definition))
-        {
-            var partOfSpeech = !string.IsNullOrEmpty(currentWord.PartOfSpeech) ? $"[{currentWord.PartOfSpeech}] " : "";
-            System.Windows.MessageBox.Show($"{currentWord.Text}\n\n{partOfSpeech}{currentWord.Definition}", "翻译结果", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-        else
-        {
-            System.Windows.MessageBox.Show("该单词暂无释义", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+        // 打开万能翻译窗口
+        var translationWindow = new TranslationWindow(_configService);
+        translationWindow.Owner = this;
+        translationWindow.ShowDialog();
     }
 
     // 窗口关闭时保存位置
