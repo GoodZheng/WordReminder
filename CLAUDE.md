@@ -22,7 +22,7 @@ dotnet run --project WordReminder
 dotnet clean WordReminder.slnx
 ```
 
-**构建安装包**: 
+**构建安装包**:
 
 参见 [BUILD.md](BUILD.md) 获取详细的安装包构建指南。
 
@@ -30,6 +30,8 @@ dotnet clean WordReminder.slnx
 
 ### 技术栈
 - **框架**: .NET 10, WPF (Windows Presentation Foundation)
+- **MVVM**: CommunityToolkit.Mvvm (ViewModels、Messages、依赖注入)
+- **DI**: Microsoft.Extensions.DependencyInjection
 - **UI**: XAML 透明窗口样式 (`AllowsTransparency="True"`, `WindowStyle="None"`)
 - **数据库**: SQLite (Microsoft.Data.Sqlite)
 - **配置**: JSON 文件 (`appsettings.json`)
@@ -40,31 +42,48 @@ dotnet clean WordReminder.slnx
 ```
 WordReminder/
 ├── Models/              # 数据模型
-│   ├── Word.cs         # 单词实体 (Text, Phonetic, PartOfSpeech, Definition, Example)
-│   └── AppSettings.cs  # 配置模型
-├── Services/           # 业务逻辑
-│   ├── DatabaseService.cs      # SQLite 操作 (words.db)
-│   ├── ConfigService.cs        # JSON 配置管理 (appsettings.json)
-│   ├── BingDictionaryService.cs # 必应词典网页抓取
-│   └── DefaultWordData.cs      # 内置单词数据 (20个四级单词)
-├── MainWindow.xaml     # 透明展示窗口
-├── SettingsWindow.xaml # 设置对话框
-└── WordReminder.csproj # 项目文件
+│   ├── Word.cs         # 单词实体
+│   ├── AppSettings.cs  # 配置模型
+│   └── HotKey.cs       # 快捷键模型
+├── ViewModels/          # MVVM 视图模型
+│   ├── MainViewModel.cs
+│   ├── SettingsViewModel.cs
+│   ├── TranslationViewModel.cs
+│   └── ...
+├── Views/               # 视图
+│   ├── MainWindow.xaml
+│   ├── SettingsWindow.xaml
+│   ├── TranslationWindow.xaml
+│   └── ...
+├── Services/            # 业务逻辑
+│   ├── DatabaseService.cs      # SQLite 操作
+│   ├── ConfigService.cs        # JSON 配置管理
+│   ├── BingDictionaryService.cs # 必应词典
+│   ├── AIDictionaryService.cs   # AI 词典
+│   ├── AITranslationService.cs  # AI 翻译
+│   ├── HotKeyService.cs         # 全局快捷键
+│   └── WindowManagerService.cs  # 窗口管理
+├── Messages/            # 消息通信
+├── Controls/            # 自定义控件
+├── Converters/          # 值转换器
+├── Bootstrapper.cs      # 依赖注入启动
+└── WordReminder.csproj  # 项目文件
 ```
 
 ### 数据流
 
-1. **初始化**: `MainWindow.InitializeAsync()` 加载配置 → 初始化数据库 → 加载单词
+1. **初始化**: `Bootstrapper` → DI 容器 → `MainWindow` → ViewModel 加载数据
 2. **单词来源**: `DefaultWordData` 中预置20个四级核心单词（网络不可用时作为后备）
 3. **存储**: SQLite (`words.db`) 存储单词数据；JSON (`appsettings.json`) 存储用户设置
 4. **展示**: DispatcherTimer 按配置间隔循环切换单词
-5. **外部API**: BingDictionaryService 从 cn.bing.com/dict 抓取单词详情（meta description 解析）
+5. **外部API**: BingDictionaryService 从 cn.bing.com/dict 抓取单词详情
 
 ### 核心配置
 
 - **窗口位置**: 自动保存/恢复；检测窗口是否在屏幕外（如外接显示器断开）并重置到主屏幕中央
 - **显示选项**: 字体大小/颜色、透明度、音标/释义显示开关
 - **切换间隔**: 可配置的单词切换时间间隔
+- **全局快捷键**: 可自定义上一个/下一个/播放暂停/翻译/窗口置顶
 
 ### 数据文件
 
@@ -76,9 +95,18 @@ WordReminder/
 - **透明**: 仅显示文字，背景完全透明
 - **置顶**: 默认 `Topmost="True"`
 - **可拖动**: 鼠标拖动移动窗口；双击打开设置
-- **右键菜单**: 播放/暂停、上一个/下一个、设置、退出
+- **右键菜单**: 播放/暂停、上一个/下一个、翻译、设置、退出
+- **全局快捷键**: 支持自定义快捷键控制各项功能
+
+## Git 配置
+
+使用 git 时如果网络不通需要使用代理：
+```bash
+git -c http.proxy=http://127.0.0.1:7890 -c https.proxy=http://127.0.0.1:7890 push
+```
 
 ## ClaudeCode 注意事项
 1. 注意符合开发模式和设计原则，注意分层，不要把所有功能堆积在一个实现类中；
 2. 每次修改代码后需要执行 dotnet build 测试验证；
-3. 如果需求不明确，需要向用户询问，不要擅自做决定。
+3. 如果需求不明确，需要向用户询问，不要擅自做决定；
+4. 使用 MVVM 模式开发，View 层只负责 UI 逻辑，业务逻辑放在 ViewModel 中。
