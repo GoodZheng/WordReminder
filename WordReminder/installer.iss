@@ -2,7 +2,7 @@
 ; 使用 Inno Setup Compiler 编译此脚本生成安装包
 
 #define AppName "WordReminder"
-#define AppVersion "1.0.7"
+#define AppVersion "1.0.8"
 #define AppPublisher "GoodZheng"
 #define AppURL "https://github.com/GoodZheng/WordReminder"
 #define AppExeName "WordReminder.exe"
@@ -31,6 +31,14 @@ SetupIconFile=app.ico
 UninstallDisplayIcon={app}\{#AppExeName}
 ; 需要管理员权限
 PrivilegesRequired=admin
+; 检测程序是否正在运行（对应 App.xaml.cs 中的 Mutex 名称）
+AppMutex=WordReminder_SingleInstance_Mutex
+; 自动关闭正在运行的程序
+CloseApplications=force
+; 匹配要关闭的应用程序
+CloseApplicationsFilter=*.exe,{#AppExeName}
+; 卸载旧版本后再安装，确保干净覆盖
+UninstallRestartComputer=no
 
 ; 自定义中文消息
 [Messages]
@@ -56,10 +64,31 @@ UninstallProgram=卸载 [name]
 var
   OldInstallPath: String;
 
+// 执行静默卸载旧版本
+function UninstallOldVersion(): Integer;
+var
+  UninstallString: String;
+  ResultCode: Integer;
+begin
+  Result := 0;
+
+  // 从注册表获取卸载命令
+  if not RegQueryStringValue(HKLM,
+    'Software\Microsoft\Windows\CurrentVersion\Uninstall\{A1B2C3D4-E5F6-4A5B-8C9D-1E2F3A4B5C6D}_is1',
+    'UninstallString', UninstallString) then
+    Exit;
+
+  // 执行静默卸载（/SILENT 表示不显示卸载界面，/SUPPRESSMSGBOXES 抑制消息框）
+  UninstallString := RemoveQuotes(UninstallString);
+  Exec(UninstallString, '/SILENT /SUPPRESSMSGBOXES /NORESTART', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Result := ResultCode;
+end;
+
 function InitializeSetup(): Boolean;
 var
   RegQueryString: String;
   RegSubKey: String;
+  UninstallResult: Integer;
 begin
   Result := True;
   OldInstallPath := '';
@@ -73,6 +102,22 @@ begin
     if RegQueryStringValue(HKLM, RegSubKey, 'InstallLocation', RegQueryString) then
     begin
       OldInstallPath := RegQueryString;
+    end;
+
+    // 如果是升级安装（版本不同），先静默卸载旧版本
+    if RegQueryString <> '{#AppVersion}' then
+    begin
+      UninstallResult := UninstallOldVersion();
+      if UninstallResult <> 0 then
+      begin
+        // 卸载失败，提示用户
+        if MsgBox('卸载旧版本失败（错误代码：' + IntToStr(UninstallResult) + '）。' + #13#10 +
+                  '是否继续安装？', mbError, MB_YESNO) = IDNO then
+        begin
+          Result := False;
+          Exit;
+        end;
+      end;
     end;
   end;
 end;

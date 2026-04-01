@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Windows;
 using System.Windows.Interop;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,11 +11,21 @@ namespace WordReminder;
 
 public partial class App : System.Windows.Application
 {
+    private const string MutexName = "WordReminder_SingleInstance_Mutex";
     private IHost? _host;
+    private Mutex? _mutex;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // 单实例检测：如果已有实例运行则退出
+        _mutex = new Mutex(true, MutexName, out bool createdNew);
+        if (!createdNew)
+        {
+            Shutdown();
+            return;
+        }
 
         // 初始化依赖注入容器
         _host = Bootstrapper.ConfigureService();
@@ -48,6 +59,8 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _mutex?.ReleaseMutex();
+        _mutex?.Dispose();
         _host?.Dispose();
         base.OnExit(e);
     }
