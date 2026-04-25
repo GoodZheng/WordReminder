@@ -23,7 +23,15 @@ public static class Bootstrapper
             {
                 logging.ClearProviders();
                 logging.SetMinimumLevel(LogLevel.Trace);
-                logging.AddNLog();
+                try
+                {
+                    logging.AddNLog();
+                }
+                catch (Exception ex)
+                {
+                    // NLog 初始化失败不应阻止程序启动
+                    System.Diagnostics.Debug.WriteLine($"NLog 初始化失败: {ex.Message}");
+                }
             })
             .ConfigureServices((context, services) =>
             {
