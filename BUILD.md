@@ -95,7 +95,8 @@ installer/
 4. 运行构建脚本：`build.bat`
 5. 测试安装版和绿色版
 6. 推送到 GitHub：`git push origin main --tags`
-7. 在 GitHub Releases 发布并上传：
+7. Claude Code 创建 Draft Release（含版本号和发布说明，不上传文件）
+8. 手动发布：在 GitHub Releases 中上传安装包并发布：
    - `installer/WordReminder-Setup-{版本号}.exe`（推荐）
    - `release/WordReminder-portable-{版本号}.exe`
 
