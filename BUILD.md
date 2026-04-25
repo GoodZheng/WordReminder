@@ -73,7 +73,9 @@ installer/
 
 ## 版本号更新
 
-发布新版本时需要更新以下文件中的版本号：
+发布新版本时需要更新以下文件中的版本号。
+
+**版本号规则**：新版本号 = GitHub 上已发布（非 Draft）的最新 Release 版本号 + 1（末位递增）。Draft 状态的 Release 不参与计算。
 
 1. **WordReminder/WordReminder.csproj**
    ```xml
@@ -89,8 +91,9 @@ installer/
 
 ## 发布流程
 
-1. 更新版本号（.csproj 和 installer.iss）
-2. 提交代码到 Git
+1. 查询 GitHub Releases，基于最新非 Draft 版本确定新版本号
+2. 更新版本号（.csproj 和 installer.iss）
+3. 提交代码到 Git
 3. 创建 Git tag：`git tag v1.0.5`
 4. 运行构建脚本：`build.bat`
 5. 测试安装版和绿色版
