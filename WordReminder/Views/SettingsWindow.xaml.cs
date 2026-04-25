@@ -29,11 +29,10 @@ public partial class SettingsWindow : Window
         {
             ApiKeyPasswordBox.Password = _viewModel.ApiKey;
 
-            // 监听 PasswordBox 变化
+            // 监听 PasswordBox 变化，实时同步到 ViewModel
             ApiKeyPasswordBox.PasswordChanged += (_, _) =>
             {
-                // 这里需要通过反射或另一种方式更新 ViewModel
-                // 由于 PasswordBox 不支持双向绑定，我们将在保存时处理
+                _viewModel.ApiKey = ApiKeyPasswordBox.Password;
             };
         }
     }
