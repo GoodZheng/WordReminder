@@ -2,7 +2,7 @@
 ; 使用 Inno Setup Compiler 编译此脚本生成安装包
 
 #define AppName "WordReminder"
-#define AppVersion "1.0.9"
+#define AppVersion "1.0.10"
 #define AppPublisher "GoodZheng"
 #define AppURL "https://github.com/GoodZheng/WordReminder"
 #define AppExeName "WordReminder.exe"
@@ -64,6 +64,17 @@ UninstallProgram=卸载 [name]
 var
   OldInstallPath: String;
 
+// 终止正在运行的 WordReminder 进程
+procedure KillWordReminderProcess();
+var
+  ResultCode: Integer;
+begin
+  Exec('taskkill', '/F /IM WordReminder.exe', '', SW_HIDE, ewWaitUntilTerminated,
+       ResultCode);
+  // 等待进程完全退出
+  Sleep(1000);
+end;
+
 // 执行静默卸载旧版本
 function UninstallOldVersion(): Integer;
 var
@@ -78,9 +89,18 @@ begin
     'UninstallString', UninstallString) then
     Exit;
 
+  // 先尝试终止旧版本进程，避免卸载时文件被占用
+  KillWordReminderProcess();
+
   // 执行静默卸载（/SILENT 表示不显示卸载界面，/SUPPRESSMSGBOXES 抑制消息框）
   UninstallString := RemoveQuotes(UninstallString);
-  Exec(UninstallString, '/SILENT /SUPPRESSMSGBOXES /NORESTART', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if not Exec(UninstallString, '/SILENT /SUPPRESSMSGBOXES /NORESTART', '', SW_HIDE,
+             ewWaitUntilTerminated, ResultCode) then
+  begin
+    Result := 1;
+    Exit;
+  end;
+
   Result := ResultCode;
 end;
 
