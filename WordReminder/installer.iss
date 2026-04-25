@@ -31,13 +31,8 @@ SetupIconFile=app.ico
 UninstallDisplayIcon={app}\{#AppExeName}
 ; 需要管理员权限
 PrivilegesRequired=admin
-; 检测程序是否正在运行（对应 App.xaml.cs 中的 Mutex 名称）
-AppMutex=WordReminder_SingleInstance_Mutex
-; 自动关闭正在运行的程序
-CloseApplications=force
-; 匹配要关闭的应用程序
-CloseApplicationsFilter=*.exe,{#AppExeName}
 ; 卸载旧版本后再安装，确保干净覆盖
+; 进程检测和关闭由 PrepareToInstall 自定义代码处理，提供中文提示且不会循环弹窗
 UninstallRestartComputer=no
 
 ; 自定义中文消息
