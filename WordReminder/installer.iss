@@ -191,8 +191,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "autostart"; Description: "开机自启动"; GroupDescription: "{cm:OtherTasks}"; Flags: unchecked
 
 [Files]
-; 主程序和依赖文件
+; 主程序
 Source: "..\publish\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+; NLog 配置文件
+Source: "..\publish\nlog.config"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; 开始菜单图标
