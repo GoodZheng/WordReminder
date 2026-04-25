@@ -57,8 +57,8 @@ WizardRunningDesc=请稍候，正在安装 [name]...
 CreateDesktopIcon=创建桌面快捷方式
 AdditionalIcons=附加图标：
 OtherTasks=其他选项：
-LaunchProgram=启动 [name]
-UninstallProgram=卸载 [name]
+LaunchProgram=启动 WordReminder
+UninstallProgram=卸载 WordReminder
 
 [Code]
 var
