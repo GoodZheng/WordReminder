@@ -151,6 +151,7 @@ public class AIDictionaryService
 
             _logger.LogInformation("正在调用 {Provider} API: {ApiUrl}", config.Provider, config.ApiUrl);
             _logger.LogInformation("使用模型: {Model}", config.Model);
+            _logger.LogDebug("使用 Key: {KeyPrefix}...", config.ApiKey.Length > 8 ? config.ApiKey[..8] : "***");
 
             // 发送请求
             var response = await _httpClient.PostAsync(config.ApiUrl, content);

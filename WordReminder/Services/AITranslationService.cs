@@ -125,7 +125,10 @@ public class AITranslationService
                 _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {config.ApiKey}");
             }
 
-            _logger.LogInformation("正在调用 AI API，类型: {Type}, 方向: {Direction}", type, direction);
+            _logger.LogInformation("正在调用 AI API，类型: {Type}, 方向: {Direction}, URL: {Url}",
+                type, direction, config.ApiUrl);
+            _logger.LogDebug("使用 Key: {KeyPrefix}...",
+                config.ApiKey.Length > 8 ? config.ApiKey[..8] : "***");
 
             // 发送请求
             var response = await _httpClient.PostAsync(config.ApiUrl, content);
