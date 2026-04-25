@@ -2,7 +2,7 @@
 ; 使用 Inno Setup Compiler 编译此脚本生成安装包
 
 #define AppName "WordReminder"
-#define AppVersion "1.0.10"
+#define AppVersion "1.0.9"
 #define AppPublisher "GoodZheng"
 #define AppURL "https://github.com/GoodZheng/WordReminder"
 #define AppExeName "WordReminder.exe"
@@ -63,80 +63,110 @@ UninstallProgram=卸载 [name]
 [Code]
 var
   OldInstallPath: String;
+  HasOldVersion: Boolean;
 
-// 终止正在运行的 WordReminder 进程
-procedure KillWordReminderProcess();
+// 检查 WordReminder 是否正在运行
+function IsWordReminderRunning(): Boolean;
 var
   ResultCode: Integer;
 begin
-  Exec('taskkill', '/F /IM WordReminder.exe', '', SW_HIDE, ewWaitUntilTerminated,
-       ResultCode);
-  // 等待进程完全退出
-  Sleep(1000);
+  Result := False;
+  // 使用 tasklist 检测进程
+  Exec('tasklist', '/FI "IMAGENAME eq WordReminder.exe" /NH', '', SW_HIDE,
+       ewWaitUntilTerminated, ResultCode);
+  Result := (ResultCode = 0);
 end;
 
-// 执行静默卸载旧版本
-function UninstallOldVersion(): Integer;
+// 终止正在运行的 WordReminder 进程
+function KillWordReminderProcess(): Boolean;
 var
-  UninstallString: String;
   ResultCode: Integer;
 begin
-  Result := 0;
-
-  // 从注册表获取卸载命令
-  if not RegQueryStringValue(HKLM,
-    'Software\Microsoft\Windows\CurrentVersion\Uninstall\{A1B2C3D4-E5F6-4A5B-8C9D-1E2F3A4B5C6D}_is1',
-    'UninstallString', UninstallString) then
-    Exit;
-
-  // 先尝试终止旧版本进程，避免卸载时文件被占用
-  KillWordReminderProcess();
-
-  // 执行静默卸载（/SILENT 表示不显示卸载界面，/SUPPRESSMSGBOXES 抑制消息框）
-  UninstallString := RemoveQuotes(UninstallString);
-  if not Exec(UninstallString, '/SILENT /SUPPRESSMSGBOXES /NORESTART', '', SW_HIDE,
-             ewWaitUntilTerminated, ResultCode) then
+  if not IsWordReminderRunning() then
   begin
-    Result := 1;
+    Result := True;
     Exit;
   end;
 
-  Result := ResultCode;
+  if Exec('taskkill', '/F /IM WordReminder.exe', '', SW_HIDE,
+          ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
+  begin
+    Sleep(1500);  // 等待进程完全退出
+    Result := True;
+  end
+  else
+    Result := False;
 end;
 
 function InitializeSetup(): Boolean;
 var
   RegQueryString: String;
   RegSubKey: String;
-  UninstallResult: Integer;
 begin
   Result := True;
   OldInstallPath := '';
+  HasOldVersion := False;
 
-  // 检查是否已安装旧版本，获取安装路径
   RegSubKey := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{A1B2C3D4-E5F6-4A5B-8C9D-1E2F3A4B5C6D}_is1';
 
   if RegQueryStringValue(HKLM, RegSubKey, 'DisplayVersion', RegQueryString) then
   begin
-    // 获取旧版本的安装路径
-    if RegQueryStringValue(HKLM, RegSubKey, 'InstallLocation', RegQueryString) then
-    begin
-      OldInstallPath := RegQueryString;
-    end;
-
-    // 如果是升级安装（版本不同），先静默卸载旧版本
+    // 如果是升级安装
     if RegQueryString <> '{#AppVersion}' then
     begin
-      UninstallResult := UninstallOldVersion();
-      if UninstallResult <> 0 then
+      HasOldVersion := True;
+
+      // 获取旧版本的安装路径
+      if RegQueryStringValue(HKLM, RegSubKey, 'InstallLocation', RegQueryString) then
+        OldInstallPath := RegQueryString;
+    end;
+  end;
+end;
+
+// 准备安装（用户已确认，即将开始复制文件）
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  UninstallString: String;
+  ResultCode: Integer;
+begin
+  Result := '';
+
+  if not HasOldVersion then
+    Exit;
+
+  // 1. 检测并关闭正在运行的程序
+  if IsWordReminderRunning() then
+  begin
+    if MsgBox('检测到 WordReminder 正在运行。' + #13#10 + #13#10 +
+              '需要关闭后才能继续更新。是否关闭程序并继续？',
+              mbConfirmation, MB_YESNO) = IDNO then
+    begin
+      Result := '安装已取消。';
+      Exit;
+    end;
+
+    if not KillWordReminderProcess() then
+    begin
+      Result := '无法关闭 WordReminder 进程，请手动关闭后重试。';
+      Exit;
+    end;
+  end;
+
+  // 2. 卸载旧版本
+  if RegQueryStringValue(HKLM,
+    'Software\Microsoft\Windows\CurrentVersion\Uninstall\{A1B2C3D4-E5F6-4A5B-8C9D-1E2F3A4B5C6D}_is1',
+    'UninstallString', UninstallString) then
+  begin
+    UninstallString := RemoveQuotes(UninstallString);
+    if not Exec(UninstallString, '/SILENT /SUPPRESSMSGBOXES /NORESTART', '',
+                SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
+    begin
+      // 卸载失败，询问是否继续（新安装会覆盖文件）
+      if MsgBox('卸载旧版本失败（错误代码：' + IntToStr(ResultCode) + '）。' + #13#10 + #13#10 +
+                '是否跳过卸载，直接继续安装？',
+                mbError, MB_YESNO) = IDNO then
       begin
-        // 卸载失败，提示用户
-        if MsgBox('卸载旧版本失败（错误代码：' + IntToStr(UninstallResult) + '）。' + #13#10 +
-                  '是否继续安装？', mbError, MB_YESNO) = IDNO then
-        begin
-          Result := False;
-          Exit;
-        end;
+        Result := '安装已取消。';
       end;
     end;
   end;
@@ -151,12 +181,11 @@ begin
   end;
 end;
 
-// 在安装后记录安装路径
+// 安装后记录路径
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    // 保存安装路径到注册表，供升级使用
     RegWriteStringValue(HKLM, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{A1B2C3D4-E5F6-4A5B-8C9D-1E2F3A4B5C6D}_is1',
                        'InstallLocation', ExpandConstant('{app}'));
   end;
