@@ -131,13 +131,27 @@ public class AITranslationService
             var response = await _httpClient.PostAsync(config.ApiUrl, content);
             var responseBody = await response.Content.ReadAsStringAsync();
 
+            _logger.LogDebug("API 响应状态: {StatusCode}, 响应体: {Body}", response.StatusCode, responseBody);
+
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("API 调用失败: {StatusCode}", response.StatusCode);
+                _logger.LogWarning("API 调用失败: {StatusCode}, 响应: {Body}", response.StatusCode, responseBody);
                 return new TranslationResult
                 {
                     Text = text,
                     TranslatedText = $"API 调用失败: {response.StatusCode}",
+                    Type = "error"
+                };
+            }
+
+            // 检测非 JSON 响应（如 HTML 错误页）
+            if (responseBody.TrimStart().StartsWith('<'))
+            {
+                _logger.LogError("API 返回了 HTML 而非 JSON。响应: {Body}", responseBody);
+                return new TranslationResult
+                {
+                    Text = text,
+                    TranslatedText = "AI API 返回了网页而非数据，请检查 API URL 和 Key 配置",
                     Type = "error"
                 };
             }

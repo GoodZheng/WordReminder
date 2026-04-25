@@ -156,9 +156,17 @@ public class AIDictionaryService
             var response = await _httpClient.PostAsync(config.ApiUrl, content);
             var responseBody = await response.Content.ReadAsStringAsync();
 
+            _logger.LogDebug("API 响应状态: {StatusCode}, 响应体: {Body}", response.StatusCode, responseBody);
+
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("API 调用失败: {StatusCode} - {Body}", response.StatusCode, responseBody);
+                return new Word { Text = wordText };
+            }
+
+            if (responseBody.TrimStart().StartsWith('<'))
+            {
+                _logger.LogError("API 返回了 HTML 而非 JSON。响应: {Body}", responseBody);
                 return new Word { Text = wordText };
             }
 
