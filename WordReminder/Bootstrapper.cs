@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using CommunityToolkit.Mvvm.Messaging;
+using NLog.Extensions.Logging;
 using WordReminder.Services;
 using WordReminder.ViewModels;
 
@@ -17,6 +19,12 @@ public static class Bootstrapper
     public static IHost ConfigureService()
     {
         var host = Host.CreateDefaultBuilder()
+            .ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.SetMinimumLevel(LogLevel.Trace);
+                logging.AddNLog();
+            })
             .ConfigureServices((context, services) =>
             {
                 // 注册 IMessenger（弱引用消息传递）

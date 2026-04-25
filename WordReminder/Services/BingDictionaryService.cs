@@ -2,6 +2,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Web;
+using Microsoft.Extensions.Logging;
 using WordReminder.Models;
 
 namespace WordReminder.Services;
@@ -9,9 +10,11 @@ namespace WordReminder.Services;
 public class BingDictionaryService
 {
     private readonly HttpClient _httpClient;
+    private readonly ILogger<BingDictionaryService> _logger;
 
-    public BingDictionaryService()
+    public BingDictionaryService(ILogger<BingDictionaryService> logger)
     {
+        _logger = logger;
         _httpClient = new HttpClient();
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
     }
@@ -63,7 +66,7 @@ public class BingDictionaryService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error fetching {wordText}: {ex.Message}");
+            _logger.LogError(ex, "Error fetching {WordText}", wordText);
             return new Word { Text = wordText };
         }
     }
@@ -109,12 +112,8 @@ public class BingDictionaryService
             word.Definition = defContent;
         }
 
-        // 调试输出
-        Console.WriteLine($"[DEBUG] Word: {word.Text}");
-        Console.WriteLine($"[DEBUG] Phonetic: {word.Phonetic}");
-        Console.WriteLine($"[DEBUG] PartOfSpeech: {word.PartOfSpeech}");
-        Console.WriteLine($"[DEBUG] Definition: {word.Definition}");
-        Console.WriteLine($"[DEBUG] defMatch.Success: {defMatch.Success}");
+        _logger.LogDebug("Word: {Word}, Phonetic: {Phonetic}, PartOfSpeech: {Pos}, Definition: {Def}, defMatch.Success: {Success}",
+            word.Text, word.Phonetic, word.PartOfSpeech, word.Definition, defMatch.Success);
 
         // 提取例句
         word.Example = ExtractExample(html);

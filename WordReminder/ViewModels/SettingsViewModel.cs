@@ -28,6 +28,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly UpdateService _updateService;
     private readonly IMessenger _messenger;
     private readonly HotKeyService _hotKeyService;
+    private readonly BingDictionaryService _bingDictionaryService;
     private UpdateInfo? _availableUpdate;
 
     // 窗口设置
@@ -148,13 +149,15 @@ public partial class SettingsViewModel : ViewModelBase
         DatabaseService databaseService,
         UpdateService updateService,
         IMessenger messenger,
-        HotKeyService hotKeyService)
+        HotKeyService hotKeyService,
+        BingDictionaryService bingDictionaryService)
     {
         _configService = configService;
         _databaseService = databaseService;
         _updateService = updateService;
         _messenger = messenger;
         _hotKeyService = hotKeyService;
+        _bingDictionaryService = bingDictionaryService;
 
         LoadSettings();
     }
@@ -300,7 +303,7 @@ public partial class SettingsViewModel : ViewModelBase
 
             // 预置单词
             var defaultWords = new[] { "ability" };
-            var bingService = new BingDictionaryService();
+            var bingService = _bingDictionaryService;
 
             foreach (var wordText in defaultWords)
             {

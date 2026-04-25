@@ -68,4 +68,5 @@ git -c http.proxy=http://127.0.0.1:7890 -c https.proxy=http://127.0.0.1:7890 pus
 1. 注意符合开发模式和设计原则，注意分层，不要把所有功能堆积在一个实现类中；
 2. 每次修改代码后需要执行 dotnet build 测试验证；
 3. 如果需求不明确，需要向用户询问，不要擅自做决定；
-4. 使用 MVVM 模式开发，View 层只负责 UI 逻辑，业务逻辑放在 ViewModel 中。
+4. 使用 MVVM 模式开发，View 层只负责 UI 逻辑，业务逻辑放在 ViewModel 中；
+5. 用户功能实现后需要询问用户是否进行安装包构建过程、推送GitHub release 过程，如果需要则安装 `BUILD.md` 中的步骤操作。

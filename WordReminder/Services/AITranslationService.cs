@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 using WordReminder.Models;
 
 namespace WordReminder.Services;
@@ -13,10 +14,12 @@ public class AITranslationService
 {
     private readonly HttpClient _httpClient;
     private readonly ConfigService _configService;
+    private readonly ILogger<AITranslationService> _logger;
 
-    public AITranslationService(ConfigService configService)
+    public AITranslationService(ConfigService configService, ILogger<AITranslationService> logger)
     {
         _configService = configService;
+        _logger = logger;
         _httpClient = new HttpClient();
         _httpClient.Timeout = TimeSpan.FromSeconds(90);
     }
@@ -122,7 +125,7 @@ public class AITranslationService
                 _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {config.ApiKey}");
             }
 
-            Console.WriteLine($"[翻译] 正在调用 AI API，类型: {type}, 方向: {direction}");
+            _logger.LogInformation("正在调用 AI API，类型: {Type}, 方向: {Direction}", type, direction);
 
             // 发送请求
             var response = await _httpClient.PostAsync(config.ApiUrl, content);
@@ -130,7 +133,7 @@ public class AITranslationService
 
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"[翻译] API 调用失败: {response.StatusCode}");
+                _logger.LogWarning("API 调用失败: {StatusCode}", response.StatusCode);
                 return new TranslationResult
                 {
                     Text = text,
@@ -153,14 +156,14 @@ public class AITranslationService
                 };
             }
 
-            Console.WriteLine($"[翻译] AI 响应: {aiContent}");
+            _logger.LogDebug("AI 响应: {Content}", aiContent);
 
             // 解析翻译结果
             return ParseTranslationResult(aiContent, text, type, direction);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[翻译] 错误: {ex.Message}");
+            _logger.LogError(ex, "翻译出错");
             return new TranslationResult
             {
                 Text = text,

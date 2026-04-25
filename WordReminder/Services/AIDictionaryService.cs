@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Logging;
 using WordReminder.Models;
 
 namespace WordReminder.Services;
@@ -10,10 +11,12 @@ public class AIDictionaryService
 {
     private readonly HttpClient _httpClient;
     private readonly ConfigService _configService;
+    private readonly ILogger<AIDictionaryService> _logger;
 
-    public AIDictionaryService(ConfigService configService)
+    public AIDictionaryService(ConfigService configService, ILogger<AIDictionaryService> logger)
     {
         _configService = configService;
+        _logger = logger;
         _httpClient = new HttpClient();
         _httpClient.Timeout = TimeSpan.FromSeconds(90);
     }
@@ -28,7 +31,7 @@ public class AIDictionaryService
             var parts = apiKey.Split('.');
             if (parts.Length != 2)
             {
-                Console.WriteLine($"[AI] 智谱 API Key 格式不正确");
+                _logger.LogWarning("智谱 API Key 格式不正确");
                 return apiKey;
             }
 
@@ -68,7 +71,7 @@ public class AIDictionaryService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[AI] 生成智谱 token 失败: {ex.Message}");
+            _logger.LogError(ex, "生成智谱 token 失败");
             return apiKey;
         }
     }
@@ -88,7 +91,7 @@ public class AIDictionaryService
         // 检查是否启用 AI 词典
         if (!config.Enabled || string.IsNullOrEmpty(config.ApiKey) || config.ApiKey == "your-api-key-here")
         {
-            Console.WriteLine($"[AI] AI 词典未配置或已禁用，返回基础单词信息");
+            _logger.LogInformation("AI 词典未配置或已禁用，返回基础单词信息");
             return new Word { Text = wordText };
         }
 
@@ -146,8 +149,8 @@ public class AIDictionaryService
                 _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {config.ApiKey}");
             }
 
-            Console.WriteLine($"[AI] 正在调用 {config.Provider} API: {config.ApiUrl}");
-            Console.WriteLine($"[AI] 使用模型: {config.Model}");
+            _logger.LogInformation("正在调用 {Provider} API: {ApiUrl}", config.Provider, config.ApiUrl);
+            _logger.LogInformation("使用模型: {Model}", config.Model);
 
             // 发送请求
             var response = await _httpClient.PostAsync(config.ApiUrl, content);
@@ -155,7 +158,7 @@ public class AIDictionaryService
 
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"[AI] API 调用失败: {response.StatusCode} - {responseBody}");
+                _logger.LogWarning("API 调用失败: {StatusCode} - {Body}", response.StatusCode, responseBody);
                 return new Word { Text = wordText };
             }
 
@@ -167,11 +170,11 @@ public class AIDictionaryService
 
             if (string.IsNullOrEmpty(aiContent))
             {
-                Console.WriteLine($"[AI] 未能从响应中提取内容");
+                _logger.LogWarning("未能从响应中提取内容");
                 return new Word { Text = wordText };
             }
 
-            Console.WriteLine($"[AI] 原始响应: {aiContent}");
+            _logger.LogDebug("原始响应: {Content}", aiContent);
 
             // 解析 AI 返回的 JSON
             var wordInfo = ParseAIResponse(aiContent);
@@ -187,22 +190,22 @@ public class AIDictionaryService
         }
         catch (HttpRequestException ex)
         {
-            Console.WriteLine($"[AI] 网络请求失败: {ex.Message}");
+            _logger.LogError(ex, "网络请求失败");
             return new Word { Text = wordText };
         }
         catch (TaskCanceledException ex)
         {
-            Console.WriteLine($"[AI] 请求超时: {ex.Message}");
+            _logger.LogError(ex, "请求超时");
             return new Word { Text = wordText };
         }
         catch (JsonException ex)
         {
-            Console.WriteLine($"[AI] JSON 解析失败: {ex.Message}");
+            _logger.LogError(ex, "JSON 解析失败");
             return new Word { Text = wordText };
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[AI] 未知错误: {ex.Message}");
+            _logger.LogError(ex, "未知错误");
             return new Word { Text = wordText };
         }
     }
