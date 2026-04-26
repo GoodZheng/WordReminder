@@ -15,6 +15,26 @@
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+
+        <!-- 单词详情上下文菜单 -->
+        <ContextMenu x:Key="WordContextMenu" Style="{StaticResource FluentContextMenuStyle}">
+            <MenuItem x:Name="AddWordMenuItem"
+                      Header="加入单词列表"
+                      Style="{StaticResource FluentMenuItemStyle}"
+                      Click="AddWordMenuItem_Click"/>
+        </ContextMenu>
+
+        <!-- 反馈标签显示/隐藏动画 -->
+        <Storyboard x:Key="FeedbackShowStoryboard">
+            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
+                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
+            </ObjectAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="Opacity">
+                <DoubleKeyFrame KeyTime="0:0:0" Value="0.9"/>
+                <DoubleKeyFrame KeyTime="0:0:1.2" Value="0.9"/>
+                <DoubleKeyFrame KeyTime="0:0:1.5" Value="0"/>
+            </DoubleAnimationUsingKeyFrames>
+        </Storyboard>
     </Window.Resources>
 
     <Grid Margin="16">
@@ -28,7 +48,7 @@
         <!-- 输入区域 -->
         <StackPanel Grid.Row="0" Margin="0,0,0,10">
             <TextBlock Text="请输入要翻译的文本（支持中英文互翻）" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
-            <TextBox Height="80"
+            <TextBox Height="60"
                      Name="InputTextBox"
                      TextWrapping="Wrap"
                      AcceptsReturn="True"
@@ -115,9 +135,8 @@
                                              VerticalAlignment="Top"
                                              VerticalScrollBarVisibility="Disabled"/>
 
-                                    <!-- 英文单词翻译为中文 -->
-                                    <!-- 译文 -->
-                                    <TextBlock Text="译文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,15,0,8" Visibility="{Binding IsEnToZhWord, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    <!-- 英文单词翻译为中文 - 译文 -->
+                                    <TextBlock Text="译文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,5" Visibility="{Binding IsEnToZhWord, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                     <TextBox Text="{Binding TranslatedText, Mode=OneWay}"
                                              TextWrapping="Wrap"
                                              FontSize="15"
@@ -133,17 +152,57 @@
                                              VerticalScrollBarVisibility="Disabled"
                                              Visibility="{Binding IsEnToZhWord, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
+                                    <!-- 英文句子翻译为中文 - 译文 -->
+                                    <TextBlock Text="译文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,5" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    <TextBox Text="{Binding TranslatedText, Mode=OneWay}"
+                                             TextWrapping="Wrap"
+                                             FontSize="15"
+                                             FontWeight="Bold"
+                                             Margin="0,0,0,10"
+                                             Foreground="{StaticResource PrimaryBrush}"
+                                             TextAlignment="Justify"
+                                             IsReadOnly="True"
+                                             BorderThickness="0"
+                                             Background="Transparent"
+                                             Padding="0"
+                                             VerticalAlignment="Top"
+                                             VerticalScrollBarVisibility="Disabled"
+                                             Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                    <!-- 分割线（句子翻译时显示） -->
+                                    <Border Height="1" Background="#E0E0E0" Margin="0,5,0,15" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                    <!-- 难词解释标题（句子翻译时显示） -->
+                                    <TextBlock Text="难词解释" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
                                     <!-- 单词详情 -->
                                     <ItemsControl ItemsSource="{Binding WordDetails}" Margin="0,0,0,10">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Border BorderBrush="#DCDCDC" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10" Background="White">
-                                                    <StackPanel>
-                                                        <!-- 单词 + 音标 -->
-                                                        <TextBlock FontSize="16" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}">
-                                                            <Run Text="{Binding Word, Mode=OneWay}"/>
-                                                            <Run Text="{Binding Phonetic, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14"/>
-                                                        </TextBlock>
+                                                    <Grid>
+                                                        <!-- 添加成功反馈标签 -->
+                                                        <Border x:Name="FeedbackBadge"
+                                                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                                Background="{StaticResource SuccessBrush}"
+                                                                CornerRadius="10" Padding="8,4"
+                                                                Visibility="Collapsed"
+                                                                Opacity="0.9"
+                                                                Panel.ZIndex="1">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="✓" Foreground="White" FontSize="12" FontWeight="Bold" Margin="0,0,4,0"/>
+                                                                <TextBlock Text="已添加" Foreground="White" FontSize="11"/>
+                                                            </StackPanel>
+                                                        </Border>
+
+                                                        <StackPanel>
+                                                            <!-- 单词名称 + 音标（双击弹出菜单） -->
+                                                            <TextBlock FontSize="16" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"
+                                                                       MouseLeftButtonDown="WordName_MouseLeftButtonDown"
+                                                                       Cursor="Hand">
+                                                                <Run Text="{Binding Word, Mode=OneWay}"/>
+                                                                <Run Text="{Binding Phonetic, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14"/>
+                                                            </TextBlock>
 
                                                         <!-- 词性 + 释义 -->
                                                         <TextBox Text="{Binding DisplayDefinition, Mode=OneWay}"
@@ -183,14 +242,12 @@
                                                                  Padding="0"
                                                                  VerticalAlignment="Top"
                                                                  Visibility="{Binding ExampleTranslation, Converter={StaticResource StringToVisibilityConverter}}"/>
-                                                    </StackPanel>
+                                                        </StackPanel>
+                                                    </Grid>
                                                 </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-
-                                    <!-- 难词解释标题 -->
-                                    <TextBlock Text="难词解释" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,15,0,8" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                                     <!-- 中文句子翻译为英文 -->
                                     <TextBlock Text="多种翻译" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,8" Visibility="{Binding IsZhToEn, Converter={StaticResource BooleanToVisibilityConverter}}"/>
