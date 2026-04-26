@@ -121,6 +121,7 @@ public partial class TranslationWindow : Controls.WindowBase
         {
             border.Visibility = Visibility.Collapsed;
             border.Opacity = 0.9;
+            wordDetail.ShowFeedback = false;
         };
     }
 
