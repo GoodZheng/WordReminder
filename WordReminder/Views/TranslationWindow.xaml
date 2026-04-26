@@ -4,11 +4,11 @@
         xmlns:converters="clr-namespace:WordReminder.Converters"
         xmlns:controls="clr-namespace:WordReminder.Controls"
         TitleText="万能翻译"
-        Width="600"
-        Height="500"
+        Width="800"
+        Height="550"
         CanResize="True"
-        MinWidth="500"
-        MinHeight="400">
+        MinWidth="750"
+        MinHeight="500">
 
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -22,63 +22,114 @@
                       Style="{StaticResource FluentMenuItemStyle}"
                       Click="AddWordMenuItem_Click"/>
         </ContextMenu>
-
-        <!-- 反馈标签显示/隐藏动画 -->
-        <Storyboard x:Key="FeedbackShowStoryboard">
-            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility">
-                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}"/>
-            </ObjectAnimationUsingKeyFrames>
-            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="Opacity">
-                <LinearDoubleKeyFrame KeyTime="0:0:0" Value="0.9"/>
-                <LinearDoubleKeyFrame KeyTime="0:0:1.2" Value="0.9"/>
-                <LinearDoubleKeyFrame KeyTime="0:0:1.5" Value="0"/>
-            </DoubleAnimationUsingKeyFrames>
-        </Storyboard>
     </Window.Resources>
 
-    <Grid Margin="16">
+    <Grid Margin="0">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
         <!-- 输入区域 -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,10">
-            <TextBlock Text="请输入要翻译的文本（支持中英文互翻）" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
-            <TextBox Height="60"
-                     Name="InputTextBox"
-                     TextWrapping="Wrap"
-                     AcceptsReturn="True"
-                     VerticalScrollBarVisibility="Auto"
-                     FontSize="14"
-                     Padding="8"
-                     PreviewKeyDown="InputTextBox_PreviewKeyDown"
-                     Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
-        </StackPanel>
+        <Border Grid.Row="0" Grid.ColumnSpan="2" Padding="16,12" BorderBrush="{StaticResource SurfaceAltBrush}" BorderThickness="0,0,0,1">
+            <StackPanel>
+                <TextBlock Text="请输入要翻译的文本（支持中英文互翻）" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                <TextBox Height="60"
+                         Name="InputTextBox"
+                         TextWrapping="Wrap"
+                         AcceptsReturn="True"
+                         VerticalScrollBarVisibility="Auto"
+                         FontSize="14"
+                         Padding="8"
+                         PreviewKeyDown="InputTextBox_PreviewKeyDown"
+                         Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
+                <Button Content="翻译"
+                        Width="100"
+                        Height="32"
+                        HorizontalAlignment="Left"
+                        Command="{Binding TranslateCommand}"
+                        IsEnabled="{Binding IsTranslating, Converter={StaticResource InverseBooleanConverter}}"
+                        Margin="0,8,0,0" Style="{StaticResource PrimaryButtonStyle}"/>
+            </StackPanel>
+        </Border>
 
-        <!-- 翻译按钮 -->
-        <Button Grid.Row="1"
-                Content="翻译"
-                Width="100"
-                Height="32"
-                HorizontalAlignment="Left"
-                Command="{Binding TranslateCommand}"
-                IsEnabled="{Binding IsTranslating, Converter={StaticResource InverseBooleanConverter}}"
-                Margin="0,0,0,10" Style="{StaticResource PrimaryButtonStyle}"/>
+        <!-- 左侧历史列表 -->
+        <Border Grid.Row="1" Grid.Column="0" BorderBrush="{StaticResource SurfaceAltBrush}" BorderThickness="0,0,1,0" Background="{StaticResource SurfaceAltBrush}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-        <!-- 结果区域 -->
-        <Border Grid.Row="2"
-                BorderBrush="{StaticResource PrimaryBgBrush}"
-                BorderThickness="1"
-                CornerRadius="4"
-                Padding="10"
-                Background="{StaticResource SurfaceAltBrush}"
-                VerticalAlignment="Stretch">
-            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled"
-                          VerticalAlignment="Stretch">
+                <!-- 历史标题 -->
+                <TextBlock Grid.Row="0" Text="翻译历史" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Padding="12,8" Background="{StaticResource SurfaceAltBrush}"/>
+
+                <!-- 历史列表 -->
+                <ListBox Grid.Row="1"
+                         ItemsSource="{Binding HistoryItems}"
+                         SelectedItem="{Binding SelectedHistoryItem}"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         SelectionMode="Single">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="12,6"/>
+                            <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource PrimaryBgBrush}"/>
+                                                <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E8F0FE"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <TextBlock Text="{Binding InputText}" FontWeight="SemiBold" FontSize="13"
+                                           TextTrimming="CharacterEllipsis" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="{Binding TranslatedTextPreview}" FontSize="12"
+                                           TextTrimming="CharacterEllipsis" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                <TextBlock Text="{Binding CreatedAtFormatted}" FontSize="10"
+                                           Foreground="{StaticResource TextSecondaryBrush}" Opacity="0.7" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- 空状态提示 -->
+                <TextBlock Grid.Row="1" Text="暂无历史记录" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Visibility="{Binding ShowHistoryEmpty, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            </Grid>
+        </Border>
+
+        <!-- 右侧内容区域 -->
+        <Border Grid.Row="1" Grid.Column="1" Padding="16" Background="White">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel>
                     <!-- 加载提示 -->
                     <TextBlock Text="{Binding LoadingText}"
@@ -101,179 +152,182 @@
                              VerticalAlignment="Top"
                              Visibility="{Binding ShowError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                    <!-- 翻译结果 -->
-                    <ContentControl Content="{Binding TranslationResult}" Visibility="{Binding TranslationResult, Converter={StaticResource NullToVisibilityConverter}}">
-                        <ContentControl.ContentTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <!-- 错误情况 -->
-                                    <TextBox Text="{Binding TranslatedText, Mode=OneWay}"
-                                             Foreground="{StaticResource DangerBrush}"
-                                             TextWrapping="Wrap"
-                                             FontSize="14"
-                                             TextAlignment="Justify"
-                                             IsReadOnly="True"
-                                             BorderThickness="0"
-                                             Background="Transparent"
-                                             Padding="0"
-                                             VerticalAlignment="Top"
-                                             Visibility="{Binding IsError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <!-- 翻译结果（含历史记录查看） -->
+                    <Grid Visibility="{Binding TranslationResult, Converter={StaticResource NullToVisibilityConverter}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-                                    <!-- 原文 -->
-                                    <TextBlock Text="原文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,15,0,8" Visibility="{Binding Text, Converter={StaticResource StringToVisibilityConverter}}"/>
-                                    <TextBox Text="{Binding Text, Mode=OneWay}"
-                                             TextWrapping="Wrap"
-                                             FontSize="14"
-                                             Margin="0,0,0,8"
-                                             Foreground="{StaticResource TextPrimaryBrush}"
-                                             TextAlignment="Justify"
-                                             IsReadOnly="True"
-                                             BorderThickness="0"
-                                             Background="Transparent"
-                                             Padding="0"
-                                             VerticalAlignment="Top"
-                                             VerticalScrollBarVisibility="Disabled"/>
+                        <!-- 删除按钮（查看历史时显示） -->
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,8"
+                                    Visibility="{Binding SelectedHistoryItem, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Button Content="删除" Command="{Binding DeleteHistoryCommand}"
+                                    CommandParameter="{Binding SelectedHistoryItem}"
+                                    FontSize="11" Padding="8,4" Style="{StaticResource DangerButtonStyle}"/>
+                        </StackPanel>
 
-                                    <!-- 英文单词翻译为中文 - 译文 -->
-                                    <TextBlock Text="译文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,5" Visibility="{Binding IsEnToZhWord, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                    <TextBox Text="{Binding TranslatedText, Mode=OneWay}"
-                                             TextWrapping="Wrap"
-                                             FontSize="15"
-                                             FontWeight="Bold"
-                                             Margin="0,0,0,15"
-                                             Foreground="{StaticResource PrimaryBrush}"
-                                             TextAlignment="Justify"
-                                             IsReadOnly="True"
-                                             BorderThickness="0"
-                                             Background="Transparent"
-                                             Padding="0"
-                                             VerticalAlignment="Top"
-                                             VerticalScrollBarVisibility="Disabled"
-                                             Visibility="{Binding IsEnToZhWord, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <!-- 翻译结果内容 -->
+                        <ContentControl Grid.Row="1" Content="{Binding TranslationResult}">
+                            <ContentControl.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <!-- 原文 -->
+                                        <TextBlock Text="原文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                                        <TextBox Text="{Binding Text, Mode=OneWay}"
+                                                 TextWrapping="Wrap"
+                                                 FontSize="14"
+                                                 Margin="0,0,0,12"
+                                                 Foreground="{StaticResource TextPrimaryBrush}"
+                                                 TextAlignment="Justify"
+                                                 IsReadOnly="True"
+                                                 BorderThickness="0"
+                                                 Background="Transparent"
+                                                 Padding="0"/>
 
-                                    <!-- 英文句子翻译为中文 - 译文 -->
-                                    <TextBlock Text="译文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,5" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                    <TextBox Text="{Binding TranslatedText, Mode=OneWay}"
-                                             TextWrapping="Wrap"
-                                             FontSize="15"
-                                             FontWeight="Bold"
-                                             Margin="0,0,0,10"
-                                             Foreground="{StaticResource PrimaryBrush}"
-                                             TextAlignment="Justify"
-                                             IsReadOnly="True"
-                                             BorderThickness="0"
-                                             Background="Transparent"
-                                             Padding="0"
-                                             VerticalAlignment="Top"
-                                             VerticalScrollBarVisibility="Disabled"
-                                             Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <!-- 错误情况 -->
+                                        <TextBox Text="{Binding TranslatedText, Mode=OneWay}"
+                                                 Foreground="{StaticResource DangerBrush}"
+                                                 TextWrapping="Wrap"
+                                                 FontSize="14"
+                                                 TextAlignment="Justify"
+                                                 IsReadOnly="True"
+                                                 BorderThickness="0"
+                                                 Background="Transparent"
+                                                 Padding="0"
+                                                 Visibility="{Binding IsError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                                    <!-- 分割线（句子翻译时显示） -->
-                                    <Border Height="1" Background="#E0E0E0" Margin="0,5,0,15" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <!-- 译文（英译中单词） -->
+                                        <TextBlock Text="译文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,5" Visibility="{Binding IsEnToZhWord, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBox Text="{Binding TranslatedText, Mode=OneWay}"
+                                                 TextWrapping="Wrap"
+                                                 FontSize="15"
+                                                 FontWeight="Bold"
+                                                 Margin="0,0,0,15"
+                                                 Foreground="{StaticResource PrimaryBrush}"
+                                                 TextAlignment="Justify"
+                                                 IsReadOnly="True"
+                                                 BorderThickness="0"
+                                                 Background="Transparent"
+                                                 Padding="0"
+                                                 Visibility="{Binding IsEnToZhWord, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                                    <!-- 难词解释标题（句子翻译时显示） -->
-                                    <TextBlock Text="难词解释" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <!-- 译文（英译中句子） -->
+                                        <TextBlock Text="译文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,5" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBox Text="{Binding TranslatedText, Mode=OneWay}"
+                                                 TextWrapping="Wrap"
+                                                 FontSize="15"
+                                                 FontWeight="Bold"
+                                                 Margin="0,0,0,10"
+                                                 Foreground="{StaticResource PrimaryBrush}"
+                                                 TextAlignment="Justify"
+                                                 IsReadOnly="True"
+                                                 BorderThickness="0"
+                                                 Background="Transparent"
+                                                 Padding="0"
+                                                 Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                                    <!-- 单词详情 -->
-                                    <ItemsControl ItemsSource="{Binding WordDetails}" Margin="0,0,0,10">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border BorderBrush="#DCDCDC" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10" Background="White">
-                                                    <Grid>
-                                                        <!-- 添加成功反馈标签 -->
-                                                        <Border x:Name="FeedbackBadge"
-                                                                HorizontalAlignment="Right" VerticalAlignment="Top"
-                                                                Background="{StaticResource SuccessBrush}"
-                                                                CornerRadius="10" Padding="8,4"
-                                                                Visibility="Collapsed"
-                                                                Opacity="0.9"
-                                                                Panel.ZIndex="1">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <TextBlock Text="✓" Foreground="White" FontSize="12" FontWeight="Bold" Margin="0,0,4,0"/>
-                                                                <TextBlock Text="已添加" Foreground="White" FontSize="11"/>
-                                                            </StackPanel>
-                                                        </Border>
+                                        <!-- 分割线 -->
+                                        <Border Height="1" Background="#E0E0E0" Margin="0,5,0,15" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
+                                        <!-- 难词解释 -->
+                                        <TextBlock Text="难词解释" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                                        <!-- 单词详情 -->
+                                        <ItemsControl ItemsSource="{Binding WordDetails}" Margin="0,0,0,10">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="#DCDCDC" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10" Background="White">
                                                         <StackPanel>
-                                                            <!-- 单词名称 + 音标（双击弹出菜单） -->
-                                                            <TextBlock FontSize="16" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"
-                                                                       MouseLeftButtonDown="WordName_MouseLeftButtonDown"
-                                                                       Cursor="Hand">
+                                                            <TextBlock FontSize="16" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}">
                                                                 <Run Text="{Binding Word, Mode=OneWay}"/>
                                                                 <Run Text="{Binding Phonetic, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14"/>
                                                             </TextBlock>
-
-                                                        <!-- 词性 + 释义 -->
-                                                        <TextBox Text="{Binding DisplayDefinition, Mode=OneWay}"
-                                                                 FontSize="14"
-                                                                 Margin="0,5,0,0"
-                                                                 TextWrapping="Wrap"
-                                                                 TextAlignment="Justify"
-                                                                 IsReadOnly="True"
-                                                                 BorderThickness="0"
-                                                                 Background="Transparent"
-                                                                 Padding="0"
-                                                                 VerticalAlignment="Top"/>
-
-                                                        <!-- 例句 -->
-                                                        <TextBox Text="{Binding Example, Mode=OneWay}"
-                                                                 FontSize="12"
-                                                                 Foreground="{StaticResource TextSecondaryBrush}"
-                                                                 FontStyle="Italic"
-                                                                 TextWrapping="Wrap"
-                                                                 Margin="0,8,0,0"
-                                                                 TextAlignment="Justify"
-                                                                 IsReadOnly="True"
-                                                                 BorderThickness="0"
-                                                                 Background="Transparent"
-                                                                 Padding="0"
-                                                                 VerticalAlignment="Top"
-                                                                 Visibility="{Binding Example, Converter={StaticResource StringToVisibilityConverter}}"/>
-                                                        <TextBox Text="{Binding ExampleTranslation, Mode=OneWay}"
-                                                                 FontSize="12"
-                                                                 Foreground="{StaticResource TextSecondaryBrush}"
-                                                                 TextWrapping="Wrap"
-                                                                 Margin="0,2,0,0"
-                                                                 TextAlignment="Justify"
-                                                                 IsReadOnly="True"
-                                                                 BorderThickness="0"
-                                                                 Background="Transparent"
-                                                                 Padding="0"
-                                                                 VerticalAlignment="Top"
-                                                                 Visibility="{Binding ExampleTranslation, Converter={StaticResource StringToVisibilityConverter}}"/>
+                                                            <TextBox Text="{Binding DisplayDefinition, Mode=OneWay}"
+                                                                     FontSize="14"
+                                                                     Margin="0,5,0,0"
+                                                                     TextWrapping="Wrap"
+                                                                     TextAlignment="Justify"
+                                                                     IsReadOnly="True"
+                                                                     BorderThickness="0"
+                                                                     Background="Transparent"
+                                                                     Padding="0"/>
+                                                            <TextBox Text="{Binding Example, Mode=OneWay}"
+                                                                     FontSize="12"
+                                                                     Foreground="{StaticResource TextSecondaryBrush}"
+                                                                     FontStyle="Italic"
+                                                                     TextWrapping="Wrap"
+                                                                     Margin="0,8,0,0"
+                                                                     TextAlignment="Justify"
+                                                                     IsReadOnly="True"
+                                                                     BorderThickness="0"
+                                                                     Background="Transparent"
+                                                                     Padding="0"
+                                                                     Visibility="{Binding Example, Converter={StaticResource StringToVisibilityConverter}}"/>
+                                                            <TextBox Text="{Binding ExampleTranslation, Mode=OneWay}"
+                                                                     FontSize="12"
+                                                                     Foreground="{StaticResource TextSecondaryBrush}"
+                                                                     TextWrapping="Wrap"
+                                                                     Margin="0,2,0,0"
+                                                                     TextAlignment="Justify"
+                                                                     IsReadOnly="True"
+                                                                     BorderThickness="0"
+                                                                     Background="Transparent"
+                                                                     Padding="0"
+                                                                     Visibility="{Binding ExampleTranslation, Converter={StaticResource StringToVisibilityConverter}}"/>
                                                         </StackPanel>
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
 
-                                    <!-- 中文句子翻译为英文 -->
-                                    <TextBlock Text="多种翻译" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,8" Visibility="{Binding IsZhToEn, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <!-- 多种翻译（中译英） -->
+                                        <TextBlock Text="多种翻译" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,8" Visibility="{Binding IsZhToEn, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                                    <!-- 翻译选项 -->
-                                    <ItemsControl ItemsSource="{Binding Options}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border BorderBrush="{StaticResource PrimaryBgBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12" Background="{StaticResource SurfaceAltBrush}">
-                                                    <StackPanel>
-                                                        <TextBox Text="{Binding Text, Mode=OneWay}" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,5" Foreground="{StaticResource PrimaryBrush}" TextWrapping="Wrap" TextAlignment="Justify" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" VerticalAlignment="Top"/>
-                                                        <TextBox Text="{Binding Scenario, Mode=OneWay}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" FontStyle="Italic" Visibility="{Binding Scenario, Converter={StaticResource StringToVisibilityConverter}}" TextWrapping="Wrap" TextAlignment="Justify" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" VerticalAlignment="Top" Margin="0,0,0,5"/>
-                                                    </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ContentControl.ContentTemplate>
-                    </ContentControl>
+                                        <!-- 翻译选项 -->
+                                        <ItemsControl ItemsSource="{Binding Options}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="{StaticResource PrimaryBgBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12" Background="{StaticResource SurfaceAltBrush}">
+                                                        <StackPanel>
+                                                            <TextBox Text="{Binding Text, Mode=OneWay}" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,5" Foreground="{StaticResource PrimaryBrush}" TextWrapping="Wrap" TextAlignment="Justify" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0"/>
+                                                            <TextBox Text="{Binding Scenario, Mode=OneWay}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" FontStyle="Italic" Visibility="{Binding Scenario, Converter={StaticResource StringToVisibilityConverter}}" TextWrapping="Wrap" TextAlignment="Justify" IsReadOnly="True" BorderThickness="0" Background="Transparent" Padding="0" Margin="0,0,0,5"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ContentControl.ContentTemplate>
+                        </ContentControl>
+                    </Grid>
                 </StackPanel>
             </ScrollViewer>
         </Border>
 
-        <!-- 底部状态栏 -->
-        <TextBlock Grid.Row="3" Text="{Binding StatusText}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+        <!-- 底部分页控件 -->
+        <Border Grid.Row="2" Grid.ColumnSpan="2" Padding="12,8" BorderBrush="{StaticResource SurfaceAltBrush}" BorderThickness="0,1,0,0" Background="{StaticResource SurfaceAltBrush}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 总记录数 -->
+                <TextBlock Grid.Column="0" Text="{Binding TotalHistoryCount, StringFormat=共 {0} 条记录}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+
+                <!-- 页码按钮 -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Content="‹" Command="{Binding PreviousPageCommand}" Width="28" Height="24" FontSize="11" Margin="0,0,4,0" Style="{StaticResource SecondaryButtonStyle}"/>
+                    <TextBlock Text="{Binding CurrentPage}" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0" MinWidth="20" TextAlignment="Center"/>
+                    <TextBlock Text="/" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <TextBlock Text="{Binding PageCount}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0" MinWidth="20" TextAlignment="Center"/>
+                    <Button Content="›" Command="{Binding NextPageCommand}" Width="28" Height="24" FontSize="11" Style="{StaticResource SecondaryButtonStyle}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 
 </controls:WindowBase>
