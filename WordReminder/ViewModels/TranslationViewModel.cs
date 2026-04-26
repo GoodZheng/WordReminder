@@ -142,7 +142,7 @@ public class TranslationResultViewModel
 /// <summary>
 /// 单词详情 ViewModel
 /// </summary>
-public class WordDetailViewModel
+public partial class WordDetailViewModel : ObservableObject
 {
     public string? Word { get; }
     public string? Phonetic { get; }
@@ -150,6 +150,9 @@ public class WordDetailViewModel
     public string? Definition { get; }
     public string? Example { get; }
     public string? ExampleTranslation { get; }
+
+    [ObservableProperty]
+    private bool _showFeedback;
 
     public WordDetailViewModel(AITranslationService.WordInfo word)
     {
