@@ -6,7 +6,7 @@ using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 
 namespace WordReminder.Views;
 
-public partial class TranslationWindow : Window
+public partial class TranslationWindow : Controls.WindowBase
 {
     public TranslationWindow(TranslationViewModel viewModel)
     {

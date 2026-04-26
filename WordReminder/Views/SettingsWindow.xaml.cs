@@ -5,7 +5,7 @@ using WordReminder.ViewModels;
 
 namespace WordReminder.Views;
 
-public partial class SettingsWindow : Window
+public partial class SettingsWindow : Controls.WindowBase
 {
     private SettingsViewModel? _viewModel;
 
@@ -16,6 +16,8 @@ public partial class SettingsWindow : Window
         // 注册消息监听
         WeakReferenceMessenger.Default.Register<CloseSettingsMessage>(this, (_, _) => Close());
         WeakReferenceMessenger.Default.Register<OpenColorPickerMessage>(this, Receive);
+        WeakReferenceMessenger.Default.Register<AddProviderMessage>(this, (_, _) => OnAddProvider());
+        WeakReferenceMessenger.Default.Register<AddModelMessage>(this, (_, _) => OnAddModel());
 
         Loaded += OnLoaded;
     }
@@ -34,6 +36,50 @@ public partial class SettingsWindow : Window
             {
                 _viewModel.ApiKey = ApiKeyPasswordBox.Password;
             };
+
+            // 监听厂商切换，同步 PasswordBox
+            _viewModel.PropertyChanged += (s, args) =>
+            {
+                if (args.PropertyName == nameof(SettingsViewModel.ApiKey))
+                {
+                    if (ApiKeyPasswordBox.Password != _viewModel.ApiKey)
+                    {
+                        ApiKeyPasswordBox.Password = _viewModel.ApiKey ?? "";
+                    }
+                }
+            };
+        }
+    }
+
+    private void OnAddProvider()
+    {
+        var dialog = new InputDialog("添加厂商", "请输入厂商名称：", "厂商名称");
+        dialog.Owner = this;
+        if (dialog.ShowDialog() == true)
+        {
+            var name = dialog.InputText;
+            var urlDialog = new InputDialog("API URL", $"请输入 {name} 的 API URL：", "https://");
+            urlDialog.Owner = this;
+            if (urlDialog.ShowDialog() == true)
+            {
+                _viewModel?.CompleteAddProvider(name, urlDialog.InputText);
+            }
+        }
+    }
+
+    private void OnAddModel()
+    {
+        var dialog = new InputDialog("添加模型", "请输入模型 ID：", "模型 ID");
+        dialog.Owner = this;
+        if (dialog.ShowDialog() == true)
+        {
+            var modelId = dialog.InputText;
+            var nameDialog = new InputDialog("显示名称", $"请输入 {modelId} 的显示名称（可选）：", modelId);
+            nameDialog.Owner = this;
+            if (nameDialog.ShowDialog() == true)
+            {
+                _viewModel?.CompleteAddModel(modelId, nameDialog.InputText);
+            }
         }
     }
 
