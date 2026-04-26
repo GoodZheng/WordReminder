@@ -18,8 +18,7 @@
 
         <!-- 单词详情上下文菜单 -->
         <ContextMenu x:Key="WordContextMenu" Style="{StaticResource FluentContextMenuStyle}">
-            <MenuItem x:Name="AddWordMenuItem"
-                      Header="加入单词列表"
+            <MenuItem Header="加入单词列表"
                       Style="{StaticResource FluentMenuItemStyle}"
                       Click="AddWordMenuItem_Click"/>
         </ContextMenu>
