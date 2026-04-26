@@ -142,13 +142,9 @@ public partial class TranslationViewModel : ViewModelBase
 
             _databaseService.InsertWord(word);
 
-            // 触发反馈动画
+            // 触发反馈动画（View 层通过 Storyboard 处理淡出）
             wordDetail.ShowFeedback = true;
             StatusText = $"已添加 \"{wordDetail.Word}\"";
-
-            // 1.5 秒后隐藏反馈
-            await Task.Delay(1500);
-            wordDetail.ShowFeedback = false;
         }
         catch (Exception ex)
         {
