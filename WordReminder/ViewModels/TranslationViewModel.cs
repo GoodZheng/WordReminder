@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WordReminder.Models;
 using WordReminder.Services;
 
 namespace WordReminder.ViewModels;
@@ -13,6 +14,7 @@ public partial class TranslationViewModel : ViewModelBase
 {
     private readonly AITranslationService _translationService;
     private readonly ConfigService _configService;
+    private readonly DatabaseService _databaseService;
 
     [ObservableProperty]
     private string _inputText = string.Empty;
@@ -38,10 +40,11 @@ public partial class TranslationViewModel : ViewModelBase
     [ObservableProperty]
     private TranslationResultViewModel? _translationResult;
 
-    public TranslationViewModel(ConfigService configService, AITranslationService translationService)
+    public TranslationViewModel(ConfigService configService, AITranslationService translationService, DatabaseService databaseService)
     {
         _configService = configService;
         _translationService = translationService;
+        _databaseService = databaseService;
 
         ShowLoading = true;
     }
@@ -107,6 +110,58 @@ public partial class TranslationViewModel : ViewModelBase
         {
             IsTranslating = false;
         }
+    }
+
+    /// <summary>
+    /// 将翻译结果中的单词加入单词列表
+    /// </summary>
+    [RelayCommand]
+    private async Task AddWordAsync(WordDetailViewModel wordDetail)
+    {
+        if (wordDetail == null || string.IsNullOrWhiteSpace(wordDetail.Word))
+            return;
+
+        // 检查是否已存在
+        if (_databaseService.WordExists(wordDetail.Word))
+        {
+            StatusText = $"单词 \"{wordDetail.Word}\" 已在列表中";
+            return;
+        }
+
+        try
+        {
+            // 构建 Word 模型并写入
+            var word = new Word
+            {
+                Text = wordDetail.Word,
+                Phonetic = wordDetail.Phonetic,
+                PartOfSpeech = wordDetail.PartOfSpeech,
+                Definition = wordDetail.Definition,
+                Example = wordDetail.Example
+            };
+
+            _databaseService.InsertWord(word);
+
+            // 触发反馈动画
+            wordDetail.ShowFeedback = true;
+            StatusText = $"已添加 \"{wordDetail.Word}\"";
+
+            // 1.5 秒后隐藏反馈
+            await Task.Delay(1500);
+            wordDetail.ShowFeedback = false;
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"添加失败: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// 检查单词是否已在列表中（供 View 层调用以更新菜单状态）
+    /// </summary>
+    public bool IsWordInList(string word)
+    {
+        return _databaseService.WordExists(word);
     }
 }
 
