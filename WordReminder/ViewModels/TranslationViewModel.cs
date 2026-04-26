@@ -116,7 +116,7 @@ public partial class TranslationViewModel : ViewModelBase
     /// 将翻译结果中的单词加入单词列表
     /// </summary>
     [RelayCommand]
-    private async Task AddWordAsync(WordDetailViewModel wordDetail)
+    private void AddWord(WordDetailViewModel wordDetail)
     {
         if (wordDetail == null || string.IsNullOrWhiteSpace(wordDetail.Word))
             return;
