@@ -32,15 +32,18 @@ public class WindowBase : Window
             window.ResizeMode = window.CanResize ? ResizeMode.CanResize : ResizeMode.NoResize;
     }
 
+    static WindowBase()
+    {
+        DefaultStyleKeyProperty.OverrideMetadata(typeof(WindowBase),
+            new FrameworkPropertyMetadata(typeof(WindowBase)));
+    }
+
     public WindowBase()
     {
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
         ResizeMode = ResizeMode.NoResize;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-
-        DefaultStyleKeyProperty.OverrideMetadata(typeof(WindowBase),
-            new FrameworkPropertyMetadata(typeof(WindowBase)));
     }
 
     public override void OnApplyTemplate()

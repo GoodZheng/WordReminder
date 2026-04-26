@@ -31,3 +31,13 @@ public record ColorPickerCancelledMessage;
 /// 显示颜色选择器错误消息
 /// </summary>
 public record ShowColorPickerErrorMessage(string Message);
+
+/// <summary>
+/// 请求弹出添加厂商对话框
+/// </summary>
+public record AddProviderMessage;
+
+/// <summary>
+/// 请求弹出添加模型对话框
+/// </summary>
+public record AddModelMessage;

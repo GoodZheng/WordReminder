@@ -90,7 +90,11 @@
     </Border>
 
     <Window.ContextMenu>
-        <ContextMenu>
+        <ContextMenu Style="{StaticResource FluentContextMenuStyle}">
+            <ContextMenu.Resources>
+                <Style TargetType="MenuItem" BasedOn="{StaticResource FluentMenuItemStyle}"/>
+                <Style TargetType="Separator" BasedOn="{StaticResource ContextMenuSeparatorStyle}"/>
+            </ContextMenu.Resources>
             <MenuItem Header="播放/暂停" Command="{Binding PlayPauseCommand}"/>
             <MenuItem Header="上一个" Command="{Binding PreviousWordCommand}"/>
             <MenuItem Header="下一个" Command="{Binding NextWordCommand}"/>

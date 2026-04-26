@@ -35,8 +35,10 @@ public class AppSettings
     public string ExampleFontColor { get; set; } = "#AAAAAA";
     public string ExampleFontFamily { get; set; } = "Segoe UI";
 
-    // AI 词典配置
-    public AIDictionarySettings AIDictionary { get; set; } = new();
+    // AI 多厂商配置
+    public List<AIProviderConfig> AIProviders { get; set; } = [];
+    public string ActiveProviderName { get; set; } = "";
+    public string ActiveModelId { get; set; } = "";
 
     // 是否已初始化过默认单词（首次启动后设为 true，用户删除单词后不再自动添加）
     public bool DefaultWordsInitialized { get; set; } = false;
@@ -51,12 +53,35 @@ public class AppSettings
     public HotKeySettings HotKeys { get; set; } = new();
 }
 
-public class AIDictionarySettings
+/// <summary>
+/// AI 厂商配置
+/// </summary>
+public class AIProviderConfig
 {
-    public bool Enabled { get; set; } = true;
-    public string Provider { get; set; } = "dashscope";  // dashscope, zhipuai, openai
-    public string ApiUrl { get; set; } = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+    public string Name { get; set; } = "";
+    public string ApiUrl { get; set; } = "";
     public string ApiKey { get; set; } = "";
-    public string Model { get; set; } = "qwen-plus";
-    public string SystemPrompt { get; set; } = "你是专业的英汉词典助手。请严格按照JSON格式返回单词信息。";
+    public bool IsBuiltin { get; set; }
+    public List<AIModelItem> Models { get; set; } = [];
+
+    public AIProviderConfig Clone()
+    {
+        return new AIProviderConfig
+        {
+            Name = Name,
+            ApiUrl = ApiUrl,
+            ApiKey = ApiKey,
+            IsBuiltin = IsBuiltin,
+            Models = Models.Select(m => new AIModelItem { ModelId = m.ModelId, DisplayName = m.DisplayName }).ToList()
+        };
+    }
+}
+
+/// <summary>
+/// AI 模型条目
+/// </summary>
+public class AIModelItem
+{
+    public string ModelId { get; set; } = "";
+    public string DisplayName { get; set; } = "";
 }

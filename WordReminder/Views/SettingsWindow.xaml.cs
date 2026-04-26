@@ -74,12 +74,7 @@ public partial class SettingsWindow : Controls.WindowBase
         if (dialog.ShowDialog() == true)
         {
             var modelId = dialog.InputText;
-            var nameDialog = new InputDialog("显示名称", $"请输入 {modelId} 的显示名称（可选）：", modelId);
-            nameDialog.Owner = this;
-            if (nameDialog.ShowDialog() == true)
-            {
-                _viewModel?.CompleteAddModel(modelId, nameDialog.InputText);
-            }
+            _viewModel?.CompleteAddModel(modelId, modelId);
         }
     }
 

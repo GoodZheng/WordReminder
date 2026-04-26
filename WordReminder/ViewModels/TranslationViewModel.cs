@@ -60,8 +60,8 @@ public partial class TranslationViewModel : ViewModelBase
         }
 
         // 检查 AI 配置
-        var aiConfig = _configService.Settings.AIDictionary;
-        if (!aiConfig.Enabled || string.IsNullOrEmpty(aiConfig.ApiKey) || aiConfig.ApiKey == "your-api-key-here")
+        var aiConfig = _configService.GetActiveProvider();
+        if (aiConfig == null || string.IsNullOrEmpty(aiConfig.ApiKey) || aiConfig.ApiKey == "your-api-key-here")
         {
             StatusText = "AI 词典未配置";
             ErrorMessage = "AI 词典未配置，请先在设置中配置 API Key";

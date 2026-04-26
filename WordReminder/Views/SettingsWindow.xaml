@@ -157,51 +157,53 @@
                         <TextBlock Text="AI 配置" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
 
                         <!-- 厂商选择 -->
-                        <Grid Margin="0,5">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="厂商" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding Providers}"
-                                      SelectedItem="{Binding SelectedProvider}"
-                                      DisplayMemberPath="Name"
-                                      Height="32" FontSize="12"/>
-                            <Button Grid.Column="2" Content="+添加" Command="{Binding AddProviderCommand}"
-                                    Margin="5,0,0,0" Height="28" FontSize="12" Padding="8,0"/>
-                            <Button Grid.Column="3" Content="恢复/删除" Command="{Binding DeleteProviderCommand}"
-                                    Margin="5,0,0,0" Height="28" FontSize="12" Padding="8,0" Style="{StaticResource DangerButtonStyle}"/>
-                        </Grid>
+                        <StackPanel Margin="0,5">
+                            <TextBlock Text="厂商" FontSize="12" Margin="0,0,0,4"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ComboBox ItemsSource="{Binding Providers}"
+                                          SelectedItem="{Binding SelectedProvider}"
+                                          DisplayMemberPath="Name"
+                                          Height="32" FontSize="12"/>
+                                <Button Grid.Column="1" Content="+添加" Command="{Binding AddProviderCommand}"
+                                        Margin="5,0,0,0" Height="28" FontSize="12" Padding="8,0"/>
+                                <Button Grid.Column="2" Content="删除" Command="{Binding DeleteProviderCommand}"
+                                        Margin="5,0,0,0" Height="28" FontSize="12" Padding="8,0" Style="{StaticResource DangerButtonStyle}"/>
+                            </Grid>
+                        </StackPanel>
 
                         <!-- API URL -->
-                        <TextBlock Text="API URL" Margin="0,8,0,2"/>
-                        <TextBox Text="{Binding ApiUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,2" Height="32" FontSize="12"/>
+                        <StackPanel Margin="0,8">
+                            <TextBlock Text="API URL" FontSize="12" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding ApiUrl, UpdateSourceTrigger=PropertyChanged}" Height="32" FontSize="12"/>
+                        </StackPanel>
 
                         <!-- 模型选择 -->
-                        <Grid Margin="0,8,0,2">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="模型" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding CurrentModels}"
-                                      SelectedItem="{Binding SelectedModel}"
-                                      DisplayMemberPath="DisplayName"
-                                      IsEditable="True"
-                                      Text="{Binding ModelId, UpdateSourceTrigger=PropertyChanged}"
-                                      Height="32" FontSize="12"/>
-                            <Button Grid.Column="2" Content="+添加" Command="{Binding AddModelCommand}"
-                                    Margin="5,0,0,0" Height="28" FontSize="12" Padding="8,0"/>
-                        </Grid>
+                        <StackPanel Margin="0,0">
+                            <TextBlock Text="模型 ID" FontSize="12" Margin="0,0,0,4"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ComboBox ItemsSource="{Binding CurrentModels}"
+                                          Text="{Binding SelectedModel, UpdateSourceTrigger=PropertyChanged}"
+                                          IsEditable="True"
+                                          Height="32" FontSize="12"/>
+                                <Button Grid.Column="1" Content="+添加" Command="{Binding AddModelCommand}"
+                                        Margin="5,0,0,0" Height="28" FontSize="12" Padding="8,0"/>
+                            </Grid>
+                        </StackPanel>
 
                         <!-- API Key -->
-                        <TextBlock Text="API Key" Margin="0,8,0,2"/>
-                        <PasswordBox x:Name="ApiKeyPasswordBox" Margin="0,2" PasswordChar="•" Height="32" FontSize="12"/>
+                        <StackPanel Margin="0,8">
+                            <TextBlock Text="API Key" FontSize="12" Margin="0,0,0,4"/>
+                            <PasswordBox x:Name="ApiKeyPasswordBox" Height="32" FontSize="12"/>
+                        </StackPanel>
 
                         <!-- 测试连通性 -->
                         <Grid Margin="0,10,0,0">
@@ -407,14 +409,10 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- 更新操作 -->
-                        <Button Content="{Binding CheckUpdateButtonText}"
-                                Command="{Binding CheckUpdateCommand}"
-                                IsEnabled="{Binding IsCheckUpdateEnabled}"
-                                Margin="0,0,0,10" Height="40" FontSize="14" Style="{StaticResource PrimaryButtonStyle}"/>
-                        <Button Content="下载更新"
-                                Command="{Binding DownloadUpdateCommand}"
-                                IsEnabled="{Binding IsDownloadUpdateEnabled}"
+                        <!-- 更新操作（合并为一个按钮） -->
+                        <Button Content="{Binding UpdateButtonText}"
+                                Command="{Binding UpdateCommand}"
+                                IsEnabled="{Binding IsUpdateButtonEnabled}"
                                 Margin="0,0,0,10" Height="40" FontSize="14" Style="{StaticResource PrimaryButtonStyle}"/>
 
                         <!-- 下载进度 -->
@@ -434,19 +432,28 @@
                         <!-- 开发者信息 -->
                         <TextBlock Text="开发者信息" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
 
-                        <TextBlock TextWrapping="Wrap" Margin="0,5">
-                            <Run Text="开发者：" FontWeight="Bold"/>
-                            <Run Text="WordReminder Team"/>
-                        </TextBlock>
+                        <!-- 开发者信息 - 使用 Grid 对齐 -->
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" MinWidth="70"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="开发者：" FontWeight="Bold" VerticalAlignment="Top"/>
+                            <TextBlock Grid.Column="1" Text="Peano" VerticalAlignment="Top"/>
+                        </Grid>
 
-                        <TextBlock TextWrapping="Wrap" Margin="0,5">
-                            <Run Text="GitHub：" FontWeight="Bold"/>
-                            <Run Text="github.com/GoodZheng/WordReminder" Foreground="{StaticResource PrimaryBrush}" Cursor="Hand">
-                                <Run.InputBindings>
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" MinWidth="70"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="GitHub：" FontWeight="Bold" VerticalAlignment="Top"/>
+                            <TextBlock Grid.Column="1" Text="github.com/GoodZheng/WordReminder" Foreground="{StaticResource PrimaryBrush}" Cursor="Hand" TextWrapping="Wrap">
+                                <TextBlock.InputBindings>
                                     <MouseBinding Command="{Binding OpenGitHubLinkCommand}" MouseAction="LeftClick"/>
-                                </Run.InputBindings>
-                            </Run>
-                        </TextBlock>
+                                </TextBlock.InputBindings>
+                            </TextBlock>
+                        </Grid>
 
                         <Separator Style="{StaticResource SectionSeparator}"/>
 
