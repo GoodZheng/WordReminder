@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -56,7 +57,8 @@ public partial class TranslationWindow : Controls.WindowBase
                 return;
 
             // 更新菜单项状态
-            if (contextMenu.Items[0] is WpfMenuItem addMenuItem)
+            if (contextMenu.Items.OfType<WpfMenuItem>().FirstOrDefault() is not WpfMenuItem addMenuItem)
+                return;
             {
                 bool exists = wordDetail.Word != null && viewModel.IsWordInList(wordDetail.Word);
                 addMenuItem.IsEnabled = !exists;
@@ -128,7 +130,7 @@ public partial class TranslationWindow : Controls.WindowBase
     private T? FindVisualChild<T>(DependencyObject parent, string name, object dataContext) where T : DependencyObject
     {
         if (parent is FrameworkElement fe && fe.Name == name && fe.DataContext == dataContext)
-            return (T)(DependencyObject)fe;
+            return (T)(object)fe;
 
         for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
         {
