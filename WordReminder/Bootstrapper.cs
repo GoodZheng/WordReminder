@@ -45,6 +45,7 @@ public static class Bootstrapper
                 services.AddSingleton<BingDictionaryService>();
                 services.AddSingleton(sp => new UpdateService("GoodZheng", "WordReminder"));
                 services.AddSingleton<AITranslationService>();
+                services.AddSingleton<TranslationHistoryService>();
                 services.AddSingleton<AIConnectivityTestService>();
                 services.AddSingleton<HotKeyService>();
 

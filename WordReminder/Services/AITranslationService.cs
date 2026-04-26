@@ -399,6 +399,64 @@ public class AITranslationService
         }
     }
 
+    /// <summary>
+    /// 从 JSON 反序列化翻译结果
+    /// </summary>
+    public static TranslationResult DeserializeTranslationResult(JsonElement root, string inputText)
+    {
+        var result = new TranslationResult
+        {
+            Text = inputText
+        };
+
+        if (root.TryGetProperty("translatedText", out var translatedText))
+        {
+            result.TranslatedText = translatedText.GetString();
+        }
+
+        if (root.TryGetProperty("type", out var type))
+        {
+            result.Type = type.GetString();
+        }
+
+        if (root.TryGetProperty("direction", out var direction))
+        {
+            result.Direction = direction.GetString();
+        }
+
+        if (root.TryGetProperty("wordDetails", out var wordDetails) && wordDetails.ValueKind == JsonValueKind.Array)
+        {
+            result.WordDetails = new List<WordInfo>();
+            foreach (var item in wordDetails.EnumerateArray())
+            {
+                result.WordDetails.Add(new WordInfo
+                {
+                    Word = item.TryGetProperty("word", out var w) ? w.GetString() : null,
+                    Phonetic = item.TryGetProperty("phonetic", out var p) ? p.GetString() : null,
+                    PartOfSpeech = item.TryGetProperty("partOfSpeech", out var pos) ? pos.GetString() : null,
+                    Definition = item.TryGetProperty("definition", out var d) ? d.GetString() : null,
+                    Example = item.TryGetProperty("example", out var e) ? e.GetString() : null,
+                    ExampleTranslation = item.TryGetProperty("exampleTranslation", out var et) ? et.GetString() : null
+                });
+            }
+        }
+
+        if (root.TryGetProperty("options", out var options) && options.ValueKind == JsonValueKind.Array)
+        {
+            result.Options = new List<TranslationOption>();
+            foreach (var item in options.EnumerateArray())
+            {
+                result.Options.Add(new TranslationOption
+                {
+                    Text = item.TryGetProperty("text", out var t) ? t.GetString() : null,
+                    Scenario = item.TryGetProperty("scenario", out var s) ? s.GetString() : null
+                });
+            }
+        }
+
+        return result;
+    }
+
     private string? GetStringValue(JsonElement element, string propertyName)
     {
         if (element.TryGetProperty(propertyName, out var property))
