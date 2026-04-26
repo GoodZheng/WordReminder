@@ -264,6 +264,15 @@ public partial class TranslationViewModel : ViewModelBase
         }
     }
 
+    partial void OnHistoryItemsChanged(ObservableCollection<HistoryItemViewModel> value)
+    {
+        OnPropertyChanged(nameof(ShowHistoryEmpty));
+        OnPropertyChanged(nameof(CanPreviousPage));
+        OnPropertyChanged(nameof(CanNextPage));
+        PreviousPageCommand.NotifyCanExecuteChanged();
+        NextPageCommand.NotifyCanExecuteChanged();
+    }
+
     /// <summary>
     /// 删除历史项
     /// </summary>
