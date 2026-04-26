@@ -6,7 +6,7 @@ using MessageBox = System.Windows.MessageBox;
 
 namespace WordReminder.Views;
 
-public partial class ColorPickerWindow : Window
+public partial class ColorPickerWindow : Controls.WindowBase
 {
     public string SelectedColor { get; private set; } = string.Empty;
 

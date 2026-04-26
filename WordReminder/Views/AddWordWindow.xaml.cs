@@ -5,7 +5,7 @@ using MessageBox = System.Windows.MessageBox;
 
 namespace WordReminder.Views;
 
-public partial class AddWordWindow : Window
+public partial class AddWordWindow : Controls.WindowBase
 {
     public string WordText { get; private set; } = string.Empty;
 
