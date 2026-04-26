@@ -86,10 +86,11 @@ public class AIDictionaryService
 
     public async Task<Word?> GetWordInfoAsync(string wordText)
     {
-        var config = _configService.Settings.AIDictionary;
+        var config = _configService.GetActiveProvider();
+        var modelId = _configService.GetActiveModelId();
 
         // 检查是否启用 AI 词典
-        if (!config.Enabled || string.IsNullOrEmpty(config.ApiKey) || config.ApiKey == "your-api-key-here")
+        if (config == null || string.IsNullOrEmpty(config.ApiKey) || config.ApiKey == "your-api-key-here")
         {
             _logger.LogInformation("AI 词典未配置或已禁用，返回基础单词信息");
             return new Word { Text = wordText };
@@ -100,13 +101,13 @@ public class AIDictionaryService
             // 构建请求
             var requestBody = new
             {
-                model = config.Model,
+                model = modelId,
                 messages = new[]
                 {
                     new
                     {
                         role = "system",
-                        content = config.SystemPrompt + @"
+                        content = @"你是专业的英汉词典助手。请严格按照JSON格式返回单词信息。
 
 请严格按照以下 JSON 格式返回单词信息：
 {
@@ -136,11 +137,10 @@ public class AIDictionaryService
             _httpClient.DefaultRequestHeaders.Clear();
 
             // 根据提供商使用不同的认证方式
-            string authToken = config.ApiKey;
-            if (config.Provider == "zhipuai")
+            if (config.Name == "智谱AI")
             {
                 // 智谱 AI 需要生成 JWT token
-                authToken = GenerateZhipuToken(config.ApiKey);
+                var authToken = GenerateZhipuToken(config.ApiKey);
                 _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {authToken}");
             }
             else
@@ -149,9 +149,9 @@ public class AIDictionaryService
                 _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {config.ApiKey}");
             }
 
-            _logger.LogInformation("正在调用 {Provider} API: {ApiUrl}", config.Provider, config.ApiUrl);
-            _logger.LogInformation("使用模型: {Model}", config.Model);
-            _logger.LogDebug("使用 Key: {KeyPrefix}...", config.ApiKey.Length > 8 ? config.ApiKey[..8] : "***");
+            _logger.LogInformation("正在调用 {Provider} API: {ApiUrl}", config.Name, config.ApiUrl);
+            _logger.LogInformation("使用模型: {Model}", modelId);
+            _logger.LogDebug("使用 Key: ***{KeySuffix}", config.ApiKey.Length > 4 ? config.ApiKey[^4..] : "****");
 
             // 发送请求
             var response = await _httpClient.PostAsync(config.ApiUrl, content);
@@ -175,7 +175,7 @@ public class AIDictionaryService
             var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
 
             // 提取 AI 返回的内容（支持多种响应格式）
-            string aiContent = ExtractAIContent(jsonResponse, config.Provider);
+            string aiContent = ExtractAIContent(jsonResponse);
 
             if (string.IsNullOrEmpty(aiContent))
             {
@@ -219,7 +219,7 @@ public class AIDictionaryService
         }
     }
 
-    private string ExtractAIContent(JsonElement jsonResponse, string provider)
+    private string ExtractAIContent(JsonElement jsonResponse)
     {
         // OpenAI / 智谱 AI 兼容格式：choices[0].message.content
         if (jsonResponse.TryGetProperty("choices", out var choices) &&

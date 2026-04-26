@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -29,6 +30,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly IMessenger _messenger;
     private readonly HotKeyService _hotKeyService;
     private readonly BingDictionaryService _bingDictionaryService;
+    private readonly AIConnectivityTestService _connectivityTestService;
     private UpdateInfo? _availableUpdate;
 
     // 窗口设置
@@ -43,16 +45,6 @@ public partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _autoStart;
-
-    // AI 配置
-    [ObservableProperty]
-    private string _apiUrl = string.Empty;
-
-    [ObservableProperty]
-    private string _model = string.Empty;
-
-    [ObservableProperty]
-    private string _apiKey = string.Empty;
 
     // 显示开关
     [ObservableProperty]
@@ -105,13 +97,10 @@ public partial class SettingsViewModel : ViewModelBase
     private string _latestVersionText = "点击检查更新";
 
     [ObservableProperty]
-    private bool _isCheckUpdateEnabled = true;
+    private bool _isUpdateButtonEnabled = true;
 
     [ObservableProperty]
-    private string _checkUpdateButtonText = "检查更新";
-
-    [ObservableProperty]
-    private bool _isDownloadUpdateEnabled;
+    private string _updateButtonText = "检查更新";
 
     [ObservableProperty]
     private bool _showDownloadProgress;
@@ -144,13 +133,59 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private HotKey _toggleTopmostHotKey = new();
 
+    // ==================== AI 多厂商配置 ====================
+
+    /// <summary>
+    /// 所有厂商配置（包括预置和自定义）
+    /// </summary>
+    public ObservableCollection<AIProviderConfig> Providers { get; } = [];
+
+    [ObservableProperty]
+    private AIProviderConfig? _selectedProvider;
+
+    [ObservableProperty]
+    private string _apiUrl = string.Empty;
+
+    [ObservableProperty]
+    private string _modelId = string.Empty;
+
+    [ObservableProperty]
+    private string _apiKey = string.Empty;
+
+    /// <summary>
+    /// 当前选中厂商的模型 ID 列表
+    /// </summary>
+    public ObservableCollection<string> CurrentModels { get; } = [];
+
+    [ObservableProperty]
+    private string _selectedModel = string.Empty;
+
+    [ObservableProperty]
+    private bool _isTesting;
+
+    [ObservableProperty]
+    private string _testResultText = string.Empty;
+
+    [ObservableProperty]
+    private bool _testResultSuccess;
+
+    public Brush TestResultBrush => TestResultSuccess
+        ? new SolidColorBrush(Colors.Green)
+        : new SolidColorBrush(Colors.Red);
+
+    partial void OnTestResultSuccessChanged(bool value)
+    {
+        OnPropertyChanged(nameof(TestResultBrush));
+    }
+
     public SettingsViewModel(
         ConfigService configService,
         DatabaseService databaseService,
         UpdateService updateService,
         IMessenger messenger,
         HotKeyService hotKeyService,
-        BingDictionaryService bingDictionaryService)
+        BingDictionaryService bingDictionaryService,
+        AIConnectivityTestService connectivityTestService)
     {
         _configService = configService;
         _databaseService = databaseService;
@@ -158,8 +193,46 @@ public partial class SettingsViewModel : ViewModelBase
         _messenger = messenger;
         _hotKeyService = hotKeyService;
         _bingDictionaryService = bingDictionaryService;
+        _connectivityTestService = connectivityTestService;
 
         LoadSettings();
+    }
+
+    partial void OnSelectedProviderChanged(AIProviderConfig? value)
+    {
+        if (value == null)
+        {
+            ApiUrl = string.Empty;
+            ApiKey = string.Empty;
+            ModelId = string.Empty;
+            SelectedModel = string.Empty;
+            CurrentModels.Clear();
+            return;
+        }
+
+        ApiUrl = value.ApiUrl;
+        ApiKey = value.ApiKey;
+
+        CurrentModels.Clear();
+        foreach (var model in value.Models)
+        {
+            CurrentModels.Add(model.ModelId);
+        }
+
+        // 尝试选中激活的模型
+        var activeModelId = _configService.GetActiveModelId();
+        SelectedModel = activeModelId;
+        ModelId = activeModelId;
+
+        TestResultText = string.Empty;
+    }
+
+    partial void OnSelectedModelChanged(string value)
+    {
+        if (!string.IsNullOrEmpty(value))
+        {
+            ModelId = value;
+        }
     }
 
     /// <summary>
@@ -175,13 +248,8 @@ public partial class SettingsViewModel : ViewModelBase
         AlwaysOnTop = settings.AlwaysOnTop;
         AutoStart = settings.AutoStart;
 
-        // AI 配置
-        if (settings.AIDictionary != null)
-        {
-            ApiUrl = settings.AIDictionary.ApiUrl ?? "";
-            Model = settings.AIDictionary.Model ?? "";
-            ApiKey = settings.AIDictionary.ApiKey ?? "";
-        }
+        // 加载 AI 厂商配置
+        LoadAIProviders();
 
         // 自动更新
         AutoUpdate = settings.AutoUpdate;
@@ -222,6 +290,24 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
 
+    private void LoadAIProviders()
+    {
+        var settings = _configService.Settings;
+
+        Providers.Clear();
+
+        // 加载已保存的厂商配置
+        foreach (var provider in settings.AIProviders)
+        {
+            Providers.Add(provider);
+        }
+
+        // 选中激活的厂商
+        var activeProvider = settings.ActiveProviderName;
+        SelectedProvider = Providers.FirstOrDefault(p => p.Name == activeProvider)
+                           ?? Providers.FirstOrDefault();
+    }
+
     // ==================== Commands ====================
 
     /// <summary>
@@ -239,14 +325,11 @@ public partial class SettingsViewModel : ViewModelBase
             s.AutoStart = AutoStart;
             s.AutoUpdate = AutoUpdate;
 
-            // AI 配置
-            if (s.AIDictionary == null)
-            {
-                s.AIDictionary = new AIDictionarySettings();
-            }
-            s.AIDictionary.ApiUrl = ApiUrl;
-            s.AIDictionary.Model = Model;
-            s.AIDictionary.ApiKey = ApiKey;
+            // AI 配置 - 保存所有厂商配置
+            SyncCurrentProviderToCollection();
+            s.AIProviders = Providers.Select(p => p.Clone()).ToList();
+            s.ActiveProviderName = SelectedProvider?.Name ?? "";
+            s.ActiveModelId = ModelId;
 
             // 显示开关
             s.ShowPhonetic = ShowPhonetic;
@@ -285,6 +368,172 @@ public partial class SettingsViewModel : ViewModelBase
 
         // 关闭设置窗口
         _messenger.Send(new CloseSettingsMessage());
+    }
+
+    /// <summary>
+    /// 将当前编辑中的厂商配置同步回集合
+    /// </summary>
+    private void SyncCurrentProviderToCollection()
+    {
+        if (SelectedProvider == null) return;
+
+        SelectedProvider.ApiUrl = ApiUrl;
+        SelectedProvider.ApiKey = ApiKey;
+
+        // 同步模型列表
+        var currentModelIds = CurrentModels.ToList();
+        if (!currentModelIds.Contains(ModelId) && !string.IsNullOrEmpty(ModelId))
+        {
+            CurrentModels.Add(ModelId);
+        }
+        SelectedProvider.Models = CurrentModels.Select(m => new AIModelItem
+        {
+            ModelId = m,
+            DisplayName = m
+        }).ToList();
+    }
+
+    /// <summary>
+    /// 添加自定义厂商
+    /// </summary>
+    [RelayCommand]
+    private void AddProvider()
+    {
+        // 通过消息请求 View 弹出输入对话框
+        _messenger.Send(new AddProviderMessage());
+    }
+
+    /// <summary>
+    /// 由 View 调用，完成添加厂商
+    /// </summary>
+    public void CompleteAddProvider(string name, string apiUrl)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        // 检查是否重名
+        if (Providers.Any(p => p.Name == name))
+        {
+            MessageBox.Show($"厂商 \"{name}\" 已存在", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var provider = new AIProviderConfig
+        {
+            Name = name.Trim(),
+            ApiUrl = apiUrl.Trim(),
+            IsBuiltin = false,
+            Models = []
+        };
+
+        Providers.Add(provider);
+        SelectedProvider = provider;
+    }
+
+    /// <summary>
+    /// 删除厂商
+    /// </summary>
+    [RelayCommand]
+    private void DeleteProvider()
+    {
+        if (SelectedProvider == null) return;
+
+        // 自定义厂商：删除
+        var deleteResult = MessageBox.Show(
+            $"确定删除厂商 \"{SelectedProvider.Name}\"？",
+            "删除厂商",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (deleteResult != MessageBoxResult.Yes) return;
+
+        var index = Providers.IndexOf(SelectedProvider);
+        Providers.Remove(SelectedProvider);
+
+        if (Providers.Count > 0)
+        {
+            SelectedProvider = Providers[Math.Min(index, Providers.Count - 1)];
+        }
+        else
+        {
+            SelectedProvider = null;
+        }
+    }
+
+    /// <summary>
+    /// 为当前厂商添加模型
+    /// </summary>
+    [RelayCommand]
+    private void AddModel()
+    {
+        if (SelectedProvider == null) return;
+
+        // 通过消息请求 View 弹出输入对话框
+        _messenger.Send(new AddModelMessage());
+    }
+
+    /// <summary>
+    /// 由 View 调用，完成添加模型
+    /// </summary>
+    public void CompleteAddModel(string modelId, string displayName)
+    {
+        if (string.IsNullOrWhiteSpace(modelId) || SelectedProvider == null) return;
+
+        modelId = modelId.Trim();
+
+        if (CurrentModels.Contains(modelId))
+        {
+            MessageBox.Show($"模型 \"{modelId}\" 已存在", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        CurrentModels.Add(modelId);
+        SelectedModel = modelId;
+        ModelId = modelId;
+    }
+
+    /// <summary>
+    /// 测试 AI 连通性
+    /// </summary>
+    [RelayCommand]
+    private async Task TestConnectionAsync()
+    {
+        if (SelectedProvider == null)
+        {
+            TestResultText = "请先选择厂商";
+            TestResultSuccess = false;
+            return;
+        }
+
+        // 同步当前编辑内容到 provider
+        SyncCurrentProviderToCollection();
+
+        IsTesting = true;
+        TestResultText = "测试中...";
+
+        try
+        {
+            var testProvider = new AIProviderConfig
+            {
+                Name = SelectedProvider.Name,
+                ApiUrl = ApiUrl,
+                ApiKey = ApiKey,
+                IsBuiltin = SelectedProvider.IsBuiltin,
+                Models = CurrentModels.Select(m => new AIModelItem { ModelId = m, DisplayName = m }).ToList()
+            };
+
+            var result = await _connectivityTestService.TestConnectionAsync(testProvider, ModelId);
+            TestResultSuccess = result.Success;
+            TestResultText = result.Message;
+        }
+        catch (Exception ex)
+        {
+            TestResultSuccess = false;
+            TestResultText = $"测试失败: {ex.Message}";
+        }
+        finally
+        {
+            IsTesting = false;
+        }
     }
 
     /// <summary>
@@ -334,13 +583,21 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// 检查更新命令
+    /// 统一更新按钮：检查更新 / 下载更新 二合一
     /// </summary>
     [RelayCommand]
-    private async Task CheckUpdateAsync()
+    private async Task UpdateAsync()
     {
-        IsCheckUpdateEnabled = false;
-        CheckUpdateButtonText = "检查中...";
+        // 如果已有可用更新，直接下载
+        if (_availableUpdate != null)
+        {
+            await DownloadUpdateInternalAsync();
+            return;
+        }
+
+        // 否则执行检查更新
+        IsUpdateButtonEnabled = false;
+        UpdateButtonText = "检查中...";
 
         try
         {
@@ -351,9 +608,7 @@ public partial class SettingsViewModel : ViewModelBase
                 _availableUpdate = updateInfo;
                 LatestVersionText = updateInfo.VersionString;
                 LatestVersionForegroundColor = new SolidColorBrush(Colors.Orange);
-
-                CheckUpdateButtonText = "发现新版本";
-                IsDownloadUpdateEnabled = true;
+                UpdateButtonText = $"下载 {updateInfo.VersionString}";
 
                 MessageBox.Show(
                     $"发现新版本 {updateInfo.VersionString}！\n\n{updateInfo.ReleaseNotes}",
@@ -365,9 +620,7 @@ public partial class SettingsViewModel : ViewModelBase
             {
                 LatestVersionText = "已是最新版本";
                 LatestVersionForegroundColor = new SolidColorBrush(Colors.Green);
-
-                CheckUpdateButtonText = "检查更新";
-                IsDownloadUpdateEnabled = false;
+                UpdateButtonText = "检查更新";
 
                 MessageBox.Show(
                     "当前已是最新版本！",
@@ -380,6 +633,7 @@ public partial class SettingsViewModel : ViewModelBase
         {
             LatestVersionText = "检查失败";
             LatestVersionForegroundColor = new SolidColorBrush(Colors.Red);
+            UpdateButtonText = "检查更新";
 
             MessageBox.Show(
                 $"检查更新失败：{ex.Message}",
@@ -389,23 +643,17 @@ public partial class SettingsViewModel : ViewModelBase
         }
         finally
         {
-            IsCheckUpdateEnabled = true;
+            IsUpdateButtonEnabled = true;
         }
     }
 
     /// <summary>
-    /// 下载更新命令
+    /// 内部：下载更新
     /// </summary>
-    [RelayCommand]
-    private async Task DownloadUpdateAsync()
+    private async Task DownloadUpdateInternalAsync()
     {
-        if (_availableUpdate == null)
-        {
-            MessageBox.Show("请先检查更新！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
-        IsDownloadUpdateEnabled = false;
+        IsUpdateButtonEnabled = false;
+        UpdateButtonText = "准备下载...";
         ShowDownloadProgress = true;
 
         try
@@ -415,6 +663,8 @@ public partial class SettingsViewModel : ViewModelBase
             {
                 MessageBox.Show("无法获取下载链接，请手动前往 GitHub 下载。", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 UpdateService.OpenReleasesPage("GoodZheng", "WordReminder");
+                UpdateButtonText = "检查更新";
+                _availableUpdate = null;
                 return;
             }
 
@@ -423,6 +673,7 @@ public partial class SettingsViewModel : ViewModelBase
             var destinationPath = Path.Combine(tempPath, fileName);
 
             DownloadStatusText = "正在下载...";
+            UpdateButtonText = "下载中...";
 
             var progress = new Progress<double>(percent =>
             {
@@ -447,21 +698,30 @@ public partial class SettingsViewModel : ViewModelBase
                     UpdateService.StartInstaller(destinationPath);
                     System.Windows.Application.Current.Shutdown();
                 }
+                else
+                {
+                    UpdateButtonText = "检查更新";
+                    _availableUpdate = null;
+                }
             }
             else
             {
                 DownloadStatusText = "下载失败";
+                UpdateButtonText = "检查更新";
+                _availableUpdate = null;
                 MessageBox.Show("下载更新失败，请稍后重试或手动下载。", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
         catch (Exception ex)
         {
             DownloadStatusText = "下载失败";
+            UpdateButtonText = "检查更新";
+            _availableUpdate = null;
             MessageBox.Show($"下载更新失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
-            IsDownloadUpdateEnabled = true;
+            IsUpdateButtonEnabled = true;
             ShowDownloadProgress = false;
         }
     }

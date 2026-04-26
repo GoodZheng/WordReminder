@@ -202,8 +202,8 @@ public partial class MainViewModel : ViewModelBase,
         }
 
         // 检查 AI 是否可用
-        var aiConfig = _configService.Settings.AIDictionary;
-        bool useAI = aiConfig.Enabled && !string.IsNullOrEmpty(aiConfig.ApiKey) && aiConfig.ApiKey != "your-api-key-here";
+        var aiConfig = _configService.GetActiveProvider();
+        bool useAI = aiConfig != null && !string.IsNullOrEmpty(aiConfig.ApiKey) && aiConfig.ApiKey != "your-api-key-here";
 
         if (useAI)
         {

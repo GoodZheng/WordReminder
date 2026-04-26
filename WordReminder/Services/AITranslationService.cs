@@ -64,10 +64,11 @@ public class AITranslationService
     /// </summary>
     public async Task<TranslationResult?> TranslateAsync(string text)
     {
-        var config = _configService.Settings.AIDictionary;
+        var config = _configService.GetActiveProvider();
+        var modelId = _configService.GetActiveModelId();
 
         // 检查是否启用 AI
-        if (!config.Enabled || string.IsNullOrEmpty(config.ApiKey) || config.ApiKey == "your-api-key-here")
+        if (config == null || string.IsNullOrEmpty(config.ApiKey) || config.ApiKey == "your-api-key-here")
         {
             return new TranslationResult
             {
@@ -89,7 +90,7 @@ public class AITranslationService
             // 构建请求
             var requestBody = new
             {
-                model = config.Model,
+                model = modelId,
                 messages = new[]
                 {
                     new
@@ -114,10 +115,9 @@ public class AITranslationService
             _httpClient.DefaultRequestHeaders.Clear();
 
             // 根据提供商使用不同的认证方式
-            string authToken = config.ApiKey;
-            if (config.Provider == "zhipuai")
+            if (config.Name == "智谱AI")
             {
-                authToken = GenerateZhipuToken(config.ApiKey);
+                var authToken = GenerateZhipuToken(config.ApiKey);
                 _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {authToken}");
             }
             else
@@ -127,8 +127,8 @@ public class AITranslationService
 
             _logger.LogInformation("正在调用 AI API，类型: {Type}, 方向: {Direction}, URL: {Url}",
                 type, direction, config.ApiUrl);
-            _logger.LogDebug("使用 Key: {KeyPrefix}...",
-                config.ApiKey.Length > 8 ? config.ApiKey[..8] : "***");
+            _logger.LogDebug("使用 Key: ***{KeySuffix}",
+                config.ApiKey.Length > 4 ? config.ApiKey[^4..] : "****");
 
             // 发送请求
             var response = await _httpClient.PostAsync(config.ApiUrl, content);

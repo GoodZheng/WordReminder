@@ -10,7 +10,7 @@ using DragDropEffects = System.Windows.DragDropEffects;
 
 namespace WordReminder.Views;
 
-public partial class AllWordsWindow : Window
+public partial class AllWordsWindow : Controls.WindowBase
 {
     private AllWordsViewModel? _viewModel;
     private int _dragStartIndex = -1;

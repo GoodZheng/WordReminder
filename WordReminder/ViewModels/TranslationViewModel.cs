@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WordReminder.Models;
 using WordReminder.Services;
 
 namespace WordReminder.ViewModels;
@@ -13,6 +14,7 @@ public partial class TranslationViewModel : ViewModelBase
 {
     private readonly AITranslationService _translationService;
     private readonly ConfigService _configService;
+    private readonly DatabaseService _databaseService;
 
     [ObservableProperty]
     private string _inputText = string.Empty;
@@ -38,10 +40,11 @@ public partial class TranslationViewModel : ViewModelBase
     [ObservableProperty]
     private TranslationResultViewModel? _translationResult;
 
-    public TranslationViewModel(ConfigService configService, AITranslationService translationService)
+    public TranslationViewModel(ConfigService configService, AITranslationService translationService, DatabaseService databaseService)
     {
         _configService = configService;
         _translationService = translationService;
+        _databaseService = databaseService;
 
         ShowLoading = true;
     }
@@ -60,8 +63,8 @@ public partial class TranslationViewModel : ViewModelBase
         }
 
         // 检查 AI 配置
-        var aiConfig = _configService.Settings.AIDictionary;
-        if (!aiConfig.Enabled || string.IsNullOrEmpty(aiConfig.ApiKey) || aiConfig.ApiKey == "your-api-key-here")
+        var aiConfig = _configService.GetActiveProvider();
+        if (aiConfig == null || string.IsNullOrEmpty(aiConfig.ApiKey) || aiConfig.ApiKey == "your-api-key-here")
         {
             StatusText = "AI 词典未配置";
             ErrorMessage = "AI 词典未配置，请先在设置中配置 API Key";
@@ -108,6 +111,54 @@ public partial class TranslationViewModel : ViewModelBase
             IsTranslating = false;
         }
     }
+
+    /// <summary>
+    /// 将翻译结果中的单词加入单词列表
+    /// </summary>
+    [RelayCommand]
+    private void AddWord(WordDetailViewModel wordDetail)
+    {
+        if (wordDetail == null || string.IsNullOrWhiteSpace(wordDetail.Word))
+            return;
+
+        // 检查是否已存在
+        if (_databaseService.WordExists(wordDetail.Word))
+        {
+            StatusText = $"单词 \"{wordDetail.Word}\" 已在列表中";
+            return;
+        }
+
+        try
+        {
+            // 构建 Word 模型并写入
+            var word = new Word
+            {
+                Text = wordDetail.Word,
+                Phonetic = wordDetail.Phonetic,
+                PartOfSpeech = wordDetail.PartOfSpeech,
+                Definition = wordDetail.Definition,
+                Example = wordDetail.Example
+            };
+
+            _databaseService.InsertWord(word);
+
+            // 触发反馈动画（View 层通过 Storyboard 处理淡出）
+            wordDetail.ShowFeedback = true;
+            StatusText = $"已添加 \"{wordDetail.Word}\"";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"添加失败: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// 检查单词是否已在列表中（供 View 层调用以更新菜单状态）
+    /// </summary>
+    public bool IsWordInList(string word)
+    {
+        return _databaseService.WordExists(word);
+    }
 }
 
 /// <summary>
@@ -142,7 +193,7 @@ public class TranslationResultViewModel
 /// <summary>
 /// 单词详情 ViewModel
 /// </summary>
-public class WordDetailViewModel
+public partial class WordDetailViewModel : ObservableObject
 {
     public string? Word { get; }
     public string? Phonetic { get; }
@@ -150,6 +201,9 @@ public class WordDetailViewModel
     public string? Definition { get; }
     public string? Example { get; }
     public string? ExampleTranslation { get; }
+
+    [ObservableProperty]
+    private bool _showFeedback;
 
     public WordDetailViewModel(AITranslationService.WordInfo word)
     {
