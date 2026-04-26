@@ -177,7 +177,7 @@
                                         <TextBox Text="{Binding Text, Mode=OneWay}"
                                                  TextWrapping="Wrap"
                                                  FontSize="14"
-                                                 Margin="0,0,0,12"
+                                                 Margin="0,0,0,4"
                                                  Foreground="{StaticResource TextPrimaryBrush}"
                                                  TextAlignment="Justify"
                                                  IsReadOnly="True"
@@ -198,12 +198,12 @@
                                                  Visibility="{Binding IsError, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                                         <!-- 译文（英译中单词） -->
-                                        <TextBlock Text="译文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,5" Visibility="{Binding IsEnToZhWord, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBlock Text="译文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,3" Visibility="{Binding IsEnToZhWord, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                         <TextBox Text="{Binding TranslatedText, Mode=OneWay}"
                                                  TextWrapping="Wrap"
                                                  FontSize="15"
                                                  FontWeight="Bold"
-                                                 Margin="0,0,0,15"
+                                                 Margin="0,0,0,8"
                                                  Foreground="{StaticResource PrimaryBrush}"
                                                  TextAlignment="Justify"
                                                  IsReadOnly="True"
@@ -213,12 +213,12 @@
                                                  Visibility="{Binding IsEnToZhWord, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                                         <!-- 译文（英译中句子） -->
-                                        <TextBlock Text="译文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,5" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBlock Text="译文" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,3" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                         <TextBox Text="{Binding TranslatedText, Mode=OneWay}"
                                                  TextWrapping="Wrap"
                                                  FontSize="15"
                                                  FontWeight="Bold"
-                                                 Margin="0,0,0,10"
+                                                 Margin="0,0,0,6"
                                                  Foreground="{StaticResource PrimaryBrush}"
                                                  TextAlignment="Justify"
                                                  IsReadOnly="True"
@@ -228,16 +228,16 @@
                                                  Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                                         <!-- 分割线 -->
-                                        <Border Height="1" Background="#E0E0E0" Margin="0,5,0,15" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <Border Height="1" Background="#E0E0E0" Margin="0,3,0,8" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                                         <!-- 难词解释 -->
-                                        <TextBlock Text="难词解释" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBlock Text="难词解释" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5" Visibility="{Binding IsEnToZhSentence, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                                         <!-- 单词详情 -->
                                         <ItemsControl ItemsSource="{Binding WordDetails}" Margin="0,0,0,10">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border BorderBrush="#DCDCDC" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10" Background="White">
+                                                    <Border BorderBrush="#DCDCDC" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,6" Background="White">
                                                         <StackPanel>
                                                             <TextBlock FontSize="16" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}">
                                                                 <Run Text="{Binding Word, Mode=OneWay}"/>
@@ -245,7 +245,7 @@
                                                             </TextBlock>
                                                             <TextBox Text="{Binding DisplayDefinition, Mode=OneWay}"
                                                                      FontSize="14"
-                                                                     Margin="0,5,0,0"
+                                                                     Margin="0,2,0,0"
                                                                      TextWrapping="Wrap"
                                                                      TextAlignment="Justify"
                                                                      IsReadOnly="True"
@@ -257,7 +257,7 @@
                                                                      Foreground="{StaticResource TextSecondaryBrush}"
                                                                      FontStyle="Italic"
                                                                      TextWrapping="Wrap"
-                                                                     Margin="0,8,0,0"
+                                                                     Margin="0,4,0,0"
                                                                      TextAlignment="Justify"
                                                                      IsReadOnly="True"
                                                                      BorderThickness="0"
@@ -282,7 +282,7 @@
                                         </ItemsControl>
 
                                         <!-- 多种翻译（中译英） -->
-                                        <TextBlock Text="多种翻译" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,8" Visibility="{Binding IsZhToEn, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBlock Text="多种翻译" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,5,0,5" Visibility="{Binding IsZhToEn, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                                         <!-- 翻译选项 -->
                                         <ItemsControl ItemsSource="{Binding Options}">
