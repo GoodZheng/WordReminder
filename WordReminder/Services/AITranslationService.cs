@@ -409,47 +409,47 @@ public class AITranslationService
             Text = inputText
         };
 
-        if (root.TryGetProperty("translatedText", out var translatedText))
+        if (root.TryGetProperty("TranslatedText", out var translatedText))
         {
             result.TranslatedText = translatedText.GetString();
         }
 
-        if (root.TryGetProperty("type", out var type))
+        if (root.TryGetProperty("Type", out var type))
         {
             result.Type = type.GetString();
         }
 
-        if (root.TryGetProperty("direction", out var direction))
+        if (root.TryGetProperty("Direction", out var direction))
         {
             result.Direction = direction.GetString();
         }
 
-        if (root.TryGetProperty("wordDetails", out var wordDetails) && wordDetails.ValueKind == JsonValueKind.Array)
+        if (root.TryGetProperty("WordDetails", out var wordDetails) && wordDetails.ValueKind == JsonValueKind.Array)
         {
             result.WordDetails = new List<WordInfo>();
             foreach (var item in wordDetails.EnumerateArray())
             {
                 result.WordDetails.Add(new WordInfo
                 {
-                    Word = item.TryGetProperty("word", out var w) ? w.GetString() : null,
-                    Phonetic = item.TryGetProperty("phonetic", out var p) ? p.GetString() : null,
-                    PartOfSpeech = item.TryGetProperty("partOfSpeech", out var pos) ? pos.GetString() : null,
-                    Definition = item.TryGetProperty("definition", out var d) ? d.GetString() : null,
-                    Example = item.TryGetProperty("example", out var e) ? e.GetString() : null,
-                    ExampleTranslation = item.TryGetProperty("exampleTranslation", out var et) ? et.GetString() : null
+                    Word = item.TryGetProperty("Word", out var w) ? w.GetString() : null,
+                    Phonetic = item.TryGetProperty("Phonetic", out var p) ? p.GetString() : null,
+                    PartOfSpeech = item.TryGetProperty("PartOfSpeech", out var pos) ? pos.GetString() : null,
+                    Definition = item.TryGetProperty("Definition", out var d) ? d.GetString() : null,
+                    Example = item.TryGetProperty("Example", out var e) ? e.GetString() : null,
+                    ExampleTranslation = item.TryGetProperty("ExampleTranslation", out var et) ? et.GetString() : null
                 });
             }
         }
 
-        if (root.TryGetProperty("options", out var options) && options.ValueKind == JsonValueKind.Array)
+        if (root.TryGetProperty("Options", out var options) && options.ValueKind == JsonValueKind.Array)
         {
             result.Options = new List<TranslationOption>();
             foreach (var item in options.EnumerateArray())
             {
                 result.Options.Add(new TranslationOption
                 {
-                    Text = item.TryGetProperty("text", out var t) ? t.GetString() : null,
-                    Scenario = item.TryGetProperty("scenario", out var s) ? s.GetString() : null
+                    Text = item.TryGetProperty("Text", out var t) ? t.GetString() : null,
+                    Scenario = item.TryGetProperty("Scenario", out var s) ? s.GetString() : null
                 });
             }
         }
