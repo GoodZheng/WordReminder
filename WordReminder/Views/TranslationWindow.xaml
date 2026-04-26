@@ -161,7 +161,7 @@
 
                         <!-- 删除按钮（查看历史时显示） -->
                         <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,8"
-                                    Visibility="{Binding SelectedHistoryItem, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    Visibility="{Binding SelectedHistoryItem, Converter={StaticResource NullToVisibilityConverter}}">
                             <Button Content="删除" Command="{Binding DeleteHistoryCommand}"
                                     CommandParameter="{Binding SelectedHistoryItem}"
                                     FontSize="11" Padding="8,4" Style="{StaticResource DangerButtonStyle}"/>

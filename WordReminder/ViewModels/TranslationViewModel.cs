@@ -262,6 +262,10 @@ public partial class TranslationViewModel : ViewModelBase
         {
             SelectHistoryCommand.Execute(value);
         }
+        else
+        {
+            TranslationResult = null;
+        }
     }
 
     partial void OnHistoryItemsChanged(ObservableCollection<HistoryItemViewModel> value)
