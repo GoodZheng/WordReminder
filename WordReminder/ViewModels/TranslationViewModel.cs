@@ -29,7 +29,18 @@ public partial class TranslationViewModel : ViewModelBase
     private bool _isTranslating;
 
     [ObservableProperty]
+    private string _translateButtonText = "翻译";
+
+    partial void OnIsTranslatingChanged(bool value)
+    {
+        TranslateButtonText = value ? "翻译中" : "翻译";
+    }
+
+    [ObservableProperty]
     private string _loadingText = "请输入文本后点击翻译";
+
+    [ObservableProperty]
+    private string _translationDuration = string.Empty;
 
     [ObservableProperty]
     private bool _showLoading;
@@ -56,7 +67,16 @@ public partial class TranslationViewModel : ViewModelBase
     [ObservableProperty]
     private int _currentPage = 1;
 
-    private const int HistoryPageSize = 10;
+    [ObservableProperty]
+    private int _pageSize = 20;
+
+    public List<int> PageSizeOptions { get; } = [10, 20, 50, 100];
+
+    partial void OnPageSizeChanged(int value)
+    {
+        CurrentPage = 1;
+        LoadHistory();
+    }
 
     public TranslationViewModel(ConfigService configService, AITranslationService translationService, DatabaseService databaseService, TranslationHistoryService historyService)
     {
@@ -74,7 +94,7 @@ public partial class TranslationViewModel : ViewModelBase
     /// </summary>
     private void LoadHistory()
     {
-        var (items, total) = _historyService.GetPaged(CurrentPage, HistoryPageSize);
+        var (items, total) = _historyService.GetPaged(CurrentPage, PageSize);
         HistoryItems = new ObservableCollection<HistoryItemViewModel>(items.Select(i => new HistoryItemViewModel(i)));
         TotalHistoryCount = total;
         OnPropertyChanged(nameof(PageCount));
@@ -86,7 +106,7 @@ public partial class TranslationViewModel : ViewModelBase
     /// <summary>
     /// 总页数
     /// </summary>
-    public int PageCount => (int)Math.Ceiling((double)TotalHistoryCount / HistoryPageSize);
+    public int PageCount => (int)Math.Ceiling((double)TotalHistoryCount / PageSize);
 
     /// <summary>
     /// 是否没有历史记录
@@ -123,10 +143,19 @@ public partial class TranslationViewModel : ViewModelBase
         ShowError = false;
         ErrorMessage = null;
         StatusText = "正在翻译...";
+        TranslationDuration = string.Empty;
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
 
         try
         {
             var result = await _translationService.TranslateAsync(text);
+            sw.Stop();
+
+            // 显示翻译耗时
+            TranslationDuration = sw.ElapsedMilliseconds >= 1000
+                ? $"耗时 {sw.Elapsed.TotalSeconds:F1}s"
+                : $"耗时 {sw.ElapsedMilliseconds}ms";
 
             if (result != null)
             {
@@ -139,16 +168,19 @@ public partial class TranslationViewModel : ViewModelBase
                 try
                 {
                     var fullJson = SerializeTranslationResult(result);
-                    _historyService.Insert(
+                    var historyId = _historyService.Insert(
                         inputText: text,
                         translatedText: result.TranslatedText,
                         fullJson: fullJson,
                         textType: result.Type,
                         direction: result.Direction);
 
-                    // Refresh history list (back to page 1)
-                    CurrentPage = 1;
-                    LoadHistory();
+                    // 仅在新记录插入成功时刷新列表
+                    if (historyId > 0)
+                    {
+                        CurrentPage = 1;
+                        LoadHistory();
+                    }
                 }
                 catch (Exception ex)
                 {

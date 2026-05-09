@@ -131,7 +131,7 @@ public partial class SettingsViewModel : ViewModelBase
     private HotKey _translationHotKey = new();
 
     [ObservableProperty]
-    private HotKey _toggleTopmostHotKey = new();
+    private HotKey _bringToFrontHotKey = new();
 
     // ==================== AI 多厂商配置 ====================
 
@@ -219,10 +219,9 @@ public partial class SettingsViewModel : ViewModelBase
             CurrentModels.Add(model.ModelId);
         }
 
-        // 尝试选中激活的模型
-        var activeModelId = _configService.GetActiveModelId();
-        SelectedModel = activeModelId;
-        ModelId = activeModelId;
+        // 切换厂商后清空模型，让用户重新选择
+        SelectedModel = string.Empty;
+        ModelId = string.Empty;
 
         TestResultText = string.Empty;
     }
@@ -286,7 +285,7 @@ public partial class SettingsViewModel : ViewModelBase
             NextHotKey = settings.HotKeys.Next?.Clone() ?? new HotKey();
             PlayPauseHotKey = settings.HotKeys.PlayPause?.Clone() ?? new HotKey();
             TranslationHotKey = settings.HotKeys.Translation?.Clone() ?? new HotKey();
-            ToggleTopmostHotKey = settings.HotKeys.ToggleTopmost?.Clone() ?? new HotKey();
+            BringToFrontHotKey = settings.HotKeys.BringToFront?.Clone() ?? new HotKey();
         }
     }
 
@@ -357,7 +356,7 @@ public partial class SettingsViewModel : ViewModelBase
             s.HotKeys.Next = NextHotKey.Clone();
             s.HotKeys.PlayPause = PlayPauseHotKey.Clone();
             s.HotKeys.Translation = TranslationHotKey.Clone();
-            s.HotKeys.ToggleTopmost = ToggleTopmostHotKey.Clone();
+            s.HotKeys.BringToFront = BringToFrontHotKey.Clone();
         });
 
         // 应用开机自启设置
@@ -489,6 +488,19 @@ public partial class SettingsViewModel : ViewModelBase
         CurrentModels.Add(modelId);
         SelectedModel = modelId;
         ModelId = modelId;
+    }
+
+    /// <summary>
+    /// 删除当前选中的模型
+    /// </summary>
+    [RelayCommand]
+    private void DeleteModel()
+    {
+        if (SelectedProvider == null || string.IsNullOrEmpty(SelectedModel)) return;
+
+        CurrentModels.Remove(SelectedModel);
+        SelectedModel = string.Empty;
+        ModelId = string.Empty;
     }
 
     /// <summary>
@@ -864,7 +876,7 @@ public partial class SettingsViewModel : ViewModelBase
             { HotKeyAction.Next, NextHotKey },
             { HotKeyAction.PlayPause, PlayPauseHotKey },
             { HotKeyAction.Translation, TranslationHotKey },
-            { HotKeyAction.ToggleTopmost, ToggleTopmostHotKey }
+            { HotKeyAction.BringToFront, BringToFrontHotKey }
         };
 
         foreach (var kvp in hotKeys)
@@ -902,8 +914,8 @@ public partial class SettingsViewModel : ViewModelBase
             case "Translation":
                 TranslationHotKey = new HotKey { Enabled = false };
                 break;
-            case "ToggleTopmost":
-                ToggleTopmostHotKey = new HotKey { Enabled = false };
+            case "BringToFront":
+                BringToFrontHotKey = new HotKey { Enabled = false };
                 break;
         }
     }

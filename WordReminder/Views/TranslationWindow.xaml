@@ -36,37 +36,52 @@
         </Storyboard>
     </Window.Resources>
 
-    <Grid Margin="0">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Margin="1">
+        <Grid Margin="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
         <!-- 输入区域 -->
         <Border Grid.Row="0" Grid.ColumnSpan="2" Padding="16,12" BorderBrush="{StaticResource SurfaceAltBrush}" BorderThickness="0,0,0,1">
             <StackPanel>
                 <TextBlock Text="请输入要翻译的文本（支持中英文互翻）" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5"/>
-                <TextBox Height="60"
-                         Name="InputTextBox"
-                         TextWrapping="Wrap"
-                         AcceptsReturn="True"
-                         VerticalScrollBarVisibility="Auto"
-                         FontSize="14"
-                         Padding="8"
-                         PreviewKeyDown="InputTextBox_PreviewKeyDown"
-                         Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"/>
-                <Button Content="翻译"
-                        Width="100"
-                        Height="32"
-                        HorizontalAlignment="Left"
-                        Command="{Binding TranslateCommand}"
-                        IsEnabled="{Binding IsTranslating, Converter={StaticResource InverseBooleanConverter}}"
-                        Margin="0,8,0,0" Style="{StaticResource PrimaryButtonStyle}"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0"
+                             Height="80"
+                             Name="InputTextBox"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalScrollBarVisibility="Auto"
+                             FontSize="14"
+                             Padding="8"
+                             PreviewKeyDown="InputTextBox_PreviewKeyDown"
+                             Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,8,0"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Top">
+                        <Button Content="{Binding TranslateButtonText}"
+                                Width="100"
+                                Height="32"
+                                Command="{Binding TranslateCommand}"
+                                IsEnabled="{Binding IsTranslating, Converter={StaticResource InverseBooleanConverter}}"
+                                Style="{StaticResource PrimaryButtonStyle}"/>
+                        <TextBlock Text="{Binding TranslationDuration}"
+                                   Foreground="{StaticResource SuccessBrush}"
+                                   FontSize="12"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Grid>
             </StackPanel>
         </Border>
 
@@ -341,8 +356,16 @@
                 <!-- 总记录数 -->
                 <TextBlock Grid.Column="0" Text="{Binding TotalHistoryCount, StringFormat=共 {0} 条记录}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
 
-                <!-- 页码按钮 -->
+                <!-- 每页条数 + 页码按钮 -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <TextBlock Text="每页" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <ComboBox ItemsSource="{Binding PageSizeOptions}"
+                              SelectedItem="{Binding PageSize}"
+                              Width="52" Height="22" FontSize="11"
+                              Margin="0,0,8,0"
+                              VerticalContentAlignment="Center"
+                              HorizontalContentAlignment="Center"/>
+                    <TextBlock Text="条" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/>
                     <Button Content="‹" Command="{Binding PreviousPageCommand}" Width="28" Height="24" FontSize="11" Margin="0,0,4,0" Style="{StaticResource SecondaryButtonStyle}"/>
                     <TextBlock Text="{Binding CurrentPage}" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0" MinWidth="20" TextAlignment="Center"/>
                     <TextBlock Text="/" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -352,5 +375,6 @@
             </Grid>
         </Border>
     </Grid>
+    </Border>
 
 </controls:WindowBase>

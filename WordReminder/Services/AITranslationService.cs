@@ -139,10 +139,13 @@ public class AITranslationService
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("API 调用失败: {StatusCode}, 响应: {Body}", response.StatusCode, responseBody);
+
+                // 尝试从响应中提取详细错误信息
+                string userFriendlyMessage = GetUserFriendlyErrorMessage(response.StatusCode, responseBody);
                 return new TranslationResult
                 {
                     Text = text,
-                    TranslatedText = $"API 调用失败: {response.StatusCode}",
+                    TranslatedText = userFriendlyMessage,
                     Type = "error"
                 };
             }
@@ -561,5 +564,67 @@ public class AITranslationService
             .Replace('+', '-')
             .Replace('/', '_')
             .TrimEnd('=');
+    }
+
+    /// <summary>
+    /// 根据 HTTP 状态码和响应体生成用户友好的错误信息
+    /// </summary>
+    private string GetUserFriendlyErrorMessage(System.Net.HttpStatusCode statusCode, string responseBody)
+    {
+        // 尝试从 JSON 响应中提取错误消息
+        string? extractedMessage = null;
+        try
+        {
+            var jsonDoc = JsonDocument.Parse(responseBody);
+            var root = jsonDoc.RootElement;
+            if (root.TryGetProperty("error", out var error))
+            {
+                if (error.TryGetProperty("message", out var msg))
+                {
+                    extractedMessage = msg.GetString();
+                }
+            }
+        }
+        catch { /* 不是 JSON 或解析失败，忽略 */ }
+
+        var baseMessage = extractedMessage ?? string.Empty;
+
+        return statusCode switch
+        {
+            System.Net.HttpStatusCode.Unauthorized // 401
+                => "API Key 无效，请在设置中检查 API Key 是否正确配置",
+
+            System.Net.HttpStatusCode.Forbidden // 403
+                => "无权访问该 API，请检查 API Key 和 API URL 是否正确",
+
+            System.Net.HttpStatusCode.NotFound // 404
+                => !string.IsNullOrEmpty(baseMessage)
+                    ? $"模型不可用：{baseMessage}"
+                    : "API 地址或模型不存在，请检查配置",
+
+            System.Net.HttpStatusCode.TooManyRequests // 429
+                => !string.IsNullOrEmpty(baseMessage)
+                    ? $"请求过于频繁：{baseMessage}\n\n建议：稍后再试，或更换其他免费模型"
+                    : "请求过于频繁，请稍后再试",
+
+            System.Net.HttpStatusCode.BadGateway // 502
+                => "API 网关错误，服务器暂时不可用，请稍后重试",
+
+            System.Net.HttpStatusCode.ServiceUnavailable // 503
+                => "API 服务暂时不可用，请稍后重试",
+
+            System.Net.HttpStatusCode.GatewayTimeout // 504
+                => "API 响应超时，请稍后重试",
+
+            System.Net.HttpStatusCode.InternalServerError // 500
+                => "API 服务器内部错误，请稍后重试",
+
+            System.Net.HttpStatusCode.RequestTimeout // 408
+                => "请求超时，请检查网络连接后重试",
+
+            _ => !string.IsNullOrEmpty(baseMessage)
+                ? $"API 调用失败（{statusCode}）：{baseMessage}"
+                : $"API 调用失败（{statusCode}），请检查网络配置"
+        };
     }
 }

@@ -28,6 +28,7 @@ public partial class MainViewModel : ViewModelBase,
     private readonly IServiceProvider _serviceProvider;
     private readonly HotKeyService _hotKeyService;
     private readonly DispatcherTimer _timer;
+    private TranslationWindow? _translationWindow;
     private readonly DispatcherTimer _savePositionTimer;
 
     [ObservableProperty]
@@ -549,9 +550,16 @@ public partial class MainViewModel : ViewModelBase,
     [RelayCommand]
     private void OpenTranslation()
     {
+        if (_translationWindow != null && _translationWindow.IsLoaded)
+        {
+            _translationWindow.Activate();
+            return;
+        }
+
         var viewModel = _serviceProvider.GetRequiredService<TranslationViewModel>();
-        var window = new TranslationWindow(viewModel);
-        window.ShowDialog();
+        _translationWindow = new TranslationWindow(viewModel);
+        _translationWindow.Show();
+        _translationWindow.Activate();
     }
 
     /// <summary>
@@ -690,8 +698,8 @@ public partial class MainViewModel : ViewModelBase,
                 case HotKeyAction.Translation:
                     OpenTranslationCommand.Execute(null);
                     break;
-                case HotKeyAction.ToggleTopmost:
-                    AlwaysOnTop = !AlwaysOnTop;
+                case HotKeyAction.BringToFront:
+                    System.Windows.Application.Current.MainWindow?.Activate();
                     break;
             }
         });

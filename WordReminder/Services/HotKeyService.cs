@@ -61,8 +61,8 @@ public class HotKeyService : IDisposable
             success &= RegisterHotKey(settings.PlayPause, HotKeyAction.PlayPause);
         if (settings.Translation.IsValid())
             success &= RegisterHotKey(settings.Translation, HotKeyAction.Translation);
-        if (settings.ToggleTopmost.IsValid())
-            success &= RegisterHotKey(settings.ToggleTopmost, HotKeyAction.ToggleTopmost);
+        if (settings.BringToFront.IsValid())
+            success &= RegisterHotKey(settings.BringToFront, HotKeyAction.BringToFront);
 
         return success;
     }
@@ -179,7 +179,7 @@ public class HotKeyService : IDisposable
             HotKeyAction.Next => "下一个",
             HotKeyAction.PlayPause => "播放/暂停",
             HotKeyAction.Translation => "翻译",
-            HotKeyAction.ToggleTopmost => "窗口置顶",
+            HotKeyAction.BringToFront => "显示到最前面",
             _ => "未知"
         };
     }

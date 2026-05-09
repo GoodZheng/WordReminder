@@ -46,24 +46,55 @@ public class TranslationHistoryService
     /// <summary>
     /// 插入一条翻译历史
     /// </summary>
+    /// <returns>新记录返回其 ID；更新已有记录返回其 ID；无操作返回 -1</returns>
     public int Insert(string inputText, string? translatedText, string? fullJson, string? textType, string? direction)
     {
         using var connection = new SqliteConnection(_connectionString);
         connection.Open();
 
-        var sql = @"
+        // 检查是否已存在相同输入文本的记录
+        var checkSql = "SELECT Id FROM TranslationHistory WHERE InputText = @InputText ORDER BY CreatedAt DESC LIMIT 1";
+        using var checkCmd = new SqliteCommand(checkSql, connection);
+        checkCmd.Parameters.AddWithValue("@InputText", inputText);
+        var existingId = checkCmd.ExecuteScalar();
+
+        if (existingId != null)
+        {
+            // 更新已有记录的内容和时间戳，使其排到最前面
+            var updateSql = @"
+                UPDATE TranslationHistory
+                SET TranslatedText = @TranslatedText,
+                    FullJson = @FullJson,
+                    TextType = @TextType,
+                    Direction = @Direction,
+                    CreatedAt = CURRENT_TIMESTAMP
+                WHERE Id = @Id";
+
+            using var updateCmd = new SqliteCommand(updateSql, connection);
+            updateCmd.Parameters.AddWithValue("@TranslatedText", translatedText ?? (object)DBNull.Value);
+            updateCmd.Parameters.AddWithValue("@FullJson", fullJson ?? (object)DBNull.Value);
+            updateCmd.Parameters.AddWithValue("@TextType", textType ?? (object)DBNull.Value);
+            updateCmd.Parameters.AddWithValue("@Direction", direction ?? (object)DBNull.Value);
+            updateCmd.Parameters.AddWithValue("@Id", existingId);
+            updateCmd.ExecuteNonQuery();
+
+            return Convert.ToInt32(existingId);
+        }
+
+        // 不存在，插入新记录
+        var insertSql = @"
             INSERT INTO TranslationHistory (InputText, TranslatedText, FullJson, TextType, Direction)
             VALUES (@InputText, @TranslatedText, @FullJson, @TextType, @Direction);
             SELECT last_insert_rowid();";
 
-        using var cmd = new SqliteCommand(sql, connection);
-        cmd.Parameters.AddWithValue("@InputText", inputText);
-        cmd.Parameters.AddWithValue("@TranslatedText", translatedText ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@FullJson", fullJson ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@TextType", textType ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@Direction", direction ?? (object)DBNull.Value);
+        using var insertCmd = new SqliteCommand(insertSql, connection);
+        insertCmd.Parameters.AddWithValue("@InputText", inputText);
+        insertCmd.Parameters.AddWithValue("@TranslatedText", translatedText ?? (object)DBNull.Value);
+        insertCmd.Parameters.AddWithValue("@FullJson", fullJson ?? (object)DBNull.Value);
+        insertCmd.Parameters.AddWithValue("@TextType", textType ?? (object)DBNull.Value);
+        insertCmd.Parameters.AddWithValue("@Direction", direction ?? (object)DBNull.Value);
 
-        return Convert.ToInt32(cmd.ExecuteScalar());
+        return Convert.ToInt32(insertCmd.ExecuteScalar());
     }
 
     /// <summary>

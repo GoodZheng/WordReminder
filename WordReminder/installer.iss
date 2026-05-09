@@ -2,7 +2,7 @@
 ; 使用 Inno Setup Compiler 编译此脚本生成安装包
 
 #define AppName "WordReminder"
-#define AppVersion "1.0.10"
+#define AppVersion "1.0.11"
 #define AppPublisher "GoodZheng"
 #define AppURL "https://github.com/GoodZheng/WordReminder"
 #define AppExeName "WordReminder.exe"
@@ -64,12 +64,15 @@ var
 function IsWordReminderRunning(): Boolean;
 var
   ResultCode: Integer;
+  OutputText: String;
 begin
   Result := False;
-  // 使用 tasklist 检测进程
-  Exec('tasklist', '/FI "IMAGENAME eq WordReminder.exe" /NH', '', SW_HIDE,
-       ewWaitUntilTerminated, ResultCode);
-  Result := (ResultCode = 0);
+  // 使用 tasklist 检测进程，捕获输出判断进程是否存在
+  if Exec('cmd.exe', '/c tasklist /FI "IMAGENAME eq WordReminder.exe" /NH 2>nul | find /I "WordReminder.exe"', '',
+       SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  begin
+    Result := (ResultCode = 0);
+  end;
 end;
 
 // 终止正在运行的 WordReminder 进程
