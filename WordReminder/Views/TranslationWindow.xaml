@@ -347,6 +347,10 @@
         <!-- 底部分页控件 -->
         <Border Grid.Row="2" Grid.ColumnSpan="2" Padding="12,8" BorderBrush="{StaticResource SurfaceAltBrush}" BorderThickness="0,1,0,0" Background="{StaticResource SurfaceAltBrush}">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -361,17 +365,20 @@
                     <TextBlock Text="每页" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
                     <ComboBox ItemsSource="{Binding PageSizeOptions}"
                               SelectedItem="{Binding PageSize}"
-                              Width="52" Height="22" FontSize="11"
+                              Width="60" Height="22" FontSize="11"
                               Margin="0,0,8,0"
                               VerticalContentAlignment="Center"
                               HorizontalContentAlignment="Center"/>
                     <TextBlock Text="条" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                    <Button Content="‹" Command="{Binding PreviousPageCommand}" Width="28" Height="24" FontSize="11" Margin="0,0,4,0" Style="{StaticResource SecondaryButtonStyle}"/>
+                    <Button Content="◂" Command="{Binding PreviousPageCommand}" Width="28" Height="24" FontSize="13" FontWeight="Bold" Margin="0,0,4,0" Style="{StaticResource SecondaryButtonStyle}"/>
                     <TextBlock Text="{Binding CurrentPage}" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0" MinWidth="20" TextAlignment="Center"/>
                     <TextBlock Text="/" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
                     <TextBlock Text="{Binding PageCount}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0" MinWidth="20" TextAlignment="Center"/>
-                    <Button Content="›" Command="{Binding NextPageCommand}" Width="28" Height="24" FontSize="11" Style="{StaticResource SecondaryButtonStyle}"/>
+                    <Button Content="▸" Command="{Binding NextPageCommand}" Width="28" Height="24" FontSize="13" FontWeight="Bold" Style="{StaticResource SecondaryButtonStyle}"/>
                 </StackPanel>
+
+                <!-- 当前模型信息 -->
+                <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Text="{Binding ActiveModelInfo}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,4,0,0" Visibility="{Binding ActiveModelInfo, Converter={StaticResource StringToVisibilityConverter}}"/>
             </Grid>
         </Border>
     </Grid>

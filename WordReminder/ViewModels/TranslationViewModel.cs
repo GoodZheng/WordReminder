@@ -78,6 +78,19 @@ public partial class TranslationViewModel : ViewModelBase
         LoadHistory();
     }
 
+    [ObservableProperty]
+    private string _activeModelInfo = string.Empty;
+
+    private void UpdateActiveModelInfo()
+    {
+        var provider = _configService.GetActiveProvider();
+        var modelId = _configService.GetActiveModelId();
+        if (provider != null && !string.IsNullOrEmpty(modelId))
+            ActiveModelInfo = $"{provider.Name}@{modelId}";
+        else
+            ActiveModelInfo = string.Empty;
+    }
+
     public TranslationViewModel(ConfigService configService, AITranslationService translationService, DatabaseService databaseService, TranslationHistoryService historyService)
     {
         _configService = configService;
@@ -85,6 +98,7 @@ public partial class TranslationViewModel : ViewModelBase
         _databaseService = databaseService;
         _historyService = historyService;
 
+        UpdateActiveModelInfo();
         ShowLoading = true;
         LoadHistory();
     }
