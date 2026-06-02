@@ -27,6 +27,9 @@ public class DatabaseService
         using var connection = new SqliteConnection(_connectionString);
         connection.Open();
 
+        using var pragmaCmd = new SqliteCommand("PRAGMA foreign_keys = ON;", connection);
+        pragmaCmd.ExecuteNonQuery();
+
         var createTableSql = @"
             CREATE TABLE IF NOT EXISTS Words (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,6 +44,47 @@ public class DatabaseService
 
         using var cmd = new SqliteCommand(createTableSql, connection);
         cmd.ExecuteNonQuery();
+
+        var createAssistantsSql = @"
+            CREATE TABLE IF NOT EXISTS assistants (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL,
+                Icon TEXT DEFAULT '🤖',
+                SystemPrompt TEXT DEFAULT '',
+                ProviderName TEXT DEFAULT '',
+                ModelId TEXT DEFAULT '',
+                Temperature REAL DEFAULT 0.7,
+                MaxTokens INTEGER DEFAULT 2000,
+                IsBuiltin INTEGER DEFAULT 0,
+                CreatedAt TEXT DEFAULT (datetime('now','localtime')),
+                UpdatedAt TEXT DEFAULT (datetime('now','localtime'))
+            )";
+        using var cmd2 = new SqliteCommand(createAssistantsSql, connection);
+        cmd2.ExecuteNonQuery();
+
+        var createConversationsSql = @"
+            CREATE TABLE IF NOT EXISTS conversations (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                AssistantId INTEGER NOT NULL,
+                Title TEXT DEFAULT '',
+                CreatedAt TEXT DEFAULT (datetime('now','localtime')),
+                UpdatedAt TEXT DEFAULT (datetime('now','localtime')),
+                FOREIGN KEY (AssistantId) REFERENCES assistants(Id) ON DELETE CASCADE
+            )";
+        using var cmd3 = new SqliteCommand(createConversationsSql, connection);
+        cmd3.ExecuteNonQuery();
+
+        var createChatMessagesSql = @"
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ConversationId INTEGER NOT NULL,
+                Role TEXT NOT NULL,
+                Content TEXT NOT NULL,
+                CreatedAt TEXT DEFAULT (datetime('now','localtime')),
+                FOREIGN KEY (ConversationId) REFERENCES conversations(Id) ON DELETE CASCADE
+            )";
+        using var cmd4 = new SqliteCommand(createChatMessagesSql, connection);
+        cmd4.ExecuteNonQuery();
 
         // 检查是否需要添加 DisplayOrder 列（兼容旧数据库）
         try
