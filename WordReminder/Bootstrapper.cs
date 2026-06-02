@@ -62,10 +62,11 @@ public static class Bootstrapper
                 services.AddTransient<AddWordViewModel>();
                 services.AddTransient<TranslationViewModel>();
                 services.AddTransient<ColorPickerViewModel>();
-                // TODO: Tasks 6-8 将创建这些 ViewModel
-                // services.AddTransient<AssistantListViewModel>();
-                // services.AddTransient<ChatViewModel>();
-                // services.AddTransient<AssistantEditViewModel>();
+                // Task 6-8: Assistant List & Edit ViewModels
+                services.AddTransient<AssistantListViewModel>();
+                services.AddTransient<AssistantEditViewModel>();
+                // Task 9: Chat ViewModel
+                services.AddTransient<ChatViewModel>();
             })
             .Build();
 
