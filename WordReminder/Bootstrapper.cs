@@ -48,6 +48,9 @@ public static class Bootstrapper
                 services.AddSingleton<TranslationHistoryService>();
                 services.AddSingleton<AIConnectivityTestService>();
                 services.AddSingleton<HotKeyService>();
+                services.AddSingleton<AssistantService>();
+                services.AddSingleton<ChatService>();
+                services.AddSingleton<ChatAIService>();
 
                 // 注册窗口管理服务
                 services.AddSingleton<WindowManagerService>();
@@ -59,6 +62,10 @@ public static class Bootstrapper
                 services.AddTransient<AddWordViewModel>();
                 services.AddTransient<TranslationViewModel>();
                 services.AddTransient<ColorPickerViewModel>();
+                // TODO: Tasks 6-8 将创建这些 ViewModel
+                // services.AddTransient<AssistantListViewModel>();
+                // services.AddTransient<ChatViewModel>();
+                // services.AddTransient<AssistantEditViewModel>();
             })
             .Build();
 
