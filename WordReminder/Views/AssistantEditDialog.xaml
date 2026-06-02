@@ -1,0 +1,204 @@
+<controls:WindowBase x:Class="WordReminder.Views.AssistantEditDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:WordReminder.Controls"
+        xmlns:converters="clr-namespace:WordReminder.Converters"
+        TitleText="新建助手"
+        Width="520"
+        Height="520"
+        CanResize="False">
+
+    <Window.Resources>
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+    </Window.Resources>
+
+    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Margin="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 主内容区域 -->
+            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="20">
+                <StackPanel>
+                    <!-- 基本信息 -->
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="基本信息" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 图标选择按钮 -->
+                            <Button Grid.Column="0"
+                                    x:Name="IconButton"
+                                    Content="{Binding Icon}"
+                                    FontSize="28"
+                                    Width="50"
+                                    Height="50"
+                                    Click="IconButton_Click"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Margin="0,0,12,0"/>
+
+                            <StackPanel Grid.Column="1">
+                                <!-- 名称输入 -->
+                                <TextBlock Text="名称" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                         MaxLength="50"
+                                         Height="32"
+                                         Padding="8,4"/>
+
+                                <!-- 图标提示 -->
+                                <TextBlock Text="点击按钮选择图标" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- 系统提示词 -->
+                    <StackPanel Margin="0,0,0,20">
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="系统提示词" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+
+                            <!-- 帮助提示 -->
+                            <TextBlock Grid.Column="1" Text="?" FontSize="12" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" Cursor="Help">
+                                <TextBlock.ToolTip>
+                                    <ToolTip Content="定义助手的角色和行为准则，让助手知道如何回应用户。" MaxWidth="300"/>
+                                </TextBlock.ToolTip>
+                            </TextBlock>
+                        </Grid>
+
+                        <TextBox Text="{Binding SystemPrompt, UpdateSourceTrigger=PropertyChanged}"
+                                 MaxLength="2000"
+                                 Height="100"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"
+                                 Padding="8,8"/>
+                    </StackPanel>
+
+                    <!-- AI 模型 -->
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="AI 模型" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 厂商选择 -->
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="厂商" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding Providers}"
+                                          DisplayMemberPath="Name"
+                                          SelectedValuePath="Name"
+                                          SelectedValue="{Binding SelectedProviderName}"
+                                          Height="32"/>
+                            </StackPanel>
+
+                            <!-- 模型选择 -->
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="模型" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding Models}"
+                                          DisplayMemberPath="DisplayName"
+                                          SelectedValuePath="ModelId"
+                                          SelectedValue="{Binding SelectedModelId}"
+                                          Height="32"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- 高级设置 -->
+                    <StackPanel>
+                        <TextBlock Text="高级设置" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+
+                        <!-- 温度 -->
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="60"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="温度 (Temperature)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+
+                                    <!-- 帮助提示 -->
+                                    <TextBlock Grid.Column="1" Text="?" FontSize="12" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" Cursor="Help" Margin="4,0,0,0">
+                                        <TextBlock.ToolTip>
+                                            <ToolTip Content="控制回复的随机性。值越低回复越确定性，值越高回复越创造性。建议范围：0.0-1.0" MaxWidth="300"/>
+                                        </TextBlock.ToolTip>
+                                    </TextBlock>
+                                </Grid>
+
+                                <Slider Value="{Binding Temperature}"
+                                        Minimum="0"
+                                        Maximum="2"
+                                        TickFrequency="0.1"
+                                        IsSnapToTickEnabled="True"
+                                        Height="24"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="1" Text="{Binding Temperature, StringFormat={}{0:F1}}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="8,0,0,0"/>
+                        </Grid>
+
+                        <!-- 最大 Token 数 -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="最大 Token 数 (MaxTokens)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+
+                                    <!-- 帮助提示 -->
+                                    <TextBlock Grid.Column="1" Text="?" FontSize="12" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" Cursor="Help" Margin="4,0,0,0">
+                                        <TextBlock.ToolTip>
+                                            <ToolTip Content="单次回复的最大长度。建议范围：1000-32000" MaxWidth="300"/>
+                                        </TextBlock.ToolTip>
+                                    </TextBlock>
+                                </Grid>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="1" Text="0-32000" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        </Grid>
+
+                        <TextBox Text="{Binding MaxTokens, UpdateSourceTrigger=PropertyChanged}"
+                                 Height="32"
+                                 Margin="0,4,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- 底部按钮 -->
+            <Border Grid.Row="1" BorderBrush="{StaticResource SurfaceAltBrush}" BorderThickness="0,1,0,0" Padding="20,16" Background="{StaticResource SurfaceAltBrush}">
+                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                    <Button Content="取消" Width="80" Height="32" Margin="0,0,12,0" Click="Cancel_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                    <Button Content="保存" Width="80" Height="32" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+
+</controls:WindowBase>

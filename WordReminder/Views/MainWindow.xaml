@@ -103,6 +103,7 @@
             <MenuItem Header="所有单词..." Command="{Binding ShowAllWordsCommand}"/>
             <Separator/>
             <MenuItem Header="翻译" Command="{Binding OpenTranslationCommand}"/>
+            <MenuItem Header="助手" Command="{Binding OpenAssistantCommand}"/>
             <Separator/>
             <MenuItem Header="设置..." Command="{Binding OpenSettingsCommand}"/>
             <Separator/>
