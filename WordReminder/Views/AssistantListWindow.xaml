@@ -5,14 +5,65 @@
         xmlns:converters="clr-namespace:WordReminder.Converters"
         xmlns:viewmodels="clr-namespace:WordReminder.ViewModels"
         TitleText="我的助手"
-        Width="700"
-        Height="500"
+        Width="950"
+        Height="600"
         CanResize="True"
-        MinWidth="600"
-        MinHeight="400">
+        MinWidth="800"
+        MinHeight="500">
 
     <Window.Resources>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <converters:CollectionEmptyToVisibilityConverter x:Key="CollectionEmptyToVisibilityConverter"/>
+
+        <!-- 悬停高亮滚动条 -->
+        <Style x:Key="HoverScrollBar" TargetType="{x:Type ScrollBar}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Border x:Name="TrackBg" Background="Transparent" CornerRadius="4">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border x:Name="ThumbBg" Background="#C8C8C8" CornerRadius="4" Margin="0,1"/>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="ThumbBg" Property="Background" Value="#888888"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="False"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TrackBg" Property="Background" Value="#F0F0F0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Width" Value="Auto"/>
+                    <Setter Property="Height" Value="8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Margin="1">
@@ -22,188 +73,538 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- 标题栏区域 -->
+            <!-- 标题栏 -->
             <Border Grid.Row="0" BorderBrush="{StaticResource SurfaceAltBrush}" BorderThickness="0,0,0,1" Padding="20,16" Background="{StaticResource SurfaceAltBrush}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Grid.Column="0" Text="我的助手" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-
-                    <Button Grid.Column="1"
-                            Content="新建助手"
-                            Width="80"
-                            Height="32"
-                            Command="{Binding NewAssistantCommand}"
-                            Style="{StaticResource PrimaryButtonStyle}"/>
-                </Grid>
+                <TextBlock Text="我的助手" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
             </Border>
 
             <!-- 主内容区域 -->
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="280"/>
+                    <ColumnDefinition Width="280" MinWidth="60" MaxWidth="400" x:Name="AssistantListColumn"/>
+                    <ColumnDefinition Width="4"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- 左侧助手列表 -->
                 <Border Grid.Column="0" BorderBrush="{StaticResource SurfaceAltBrush}" BorderThickness="0,0,1,0" Background="{StaticResource SurfaceAltBrush}">
-                    <ListBox ItemsSource="{Binding Assistants}"
-                             SelectedItem="{Binding SelectedAssistant}"
-                             BorderThickness="0"
-                             Background="Transparent"
-                             ScrollViewer.VerticalScrollBarVisibility="Auto">
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="Padding" Value="12,10"/>
-                                <Setter Property="BorderThickness" Value="3,0,0,0"/>
-                                <Setter Property="BorderBrush" Value="Transparent"/>
-                                <Setter Property="Margin" Value="0"/>
-                                <Setter Property="Cursor" Value="Hand"/>
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="ListBoxItem">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter/>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="Background" Value="{StaticResource PrimaryBgBrush}"/>
-                                                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
-                                                </Trigger>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#E8F0FE"/>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <ListBox Grid.Row="0" ItemsSource="{Binding Assistants}"
+                                 SelectedItem="{Binding SelectedAssistant}"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListBox.Resources>
+                                <Style TargetType="ScrollBar" BasedOn="{StaticResource HoverScrollBar}"/>
+                            </ListBox.Resources>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="12,10"/>
+                                    <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                    <Setter Property="Margin" Value="0"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter Property="Background" Value="{StaticResource PrimaryBgBrush}"/>
+                                                        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#E8F0FE"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type viewmodels:AssistantListViewModel+AssistantItemViewModel}">
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding Icon}" FontSize="24" Margin="0,0,10,0"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                        </Grid>
+                                        <TextBlock Text="{Binding ConversationCountText}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="34,4,0,0"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <!-- 新建助手 -->
+                        <Button Grid.Row="1" Command="{Binding NewAssistantCommand}" Cursor="Hand" HorizontalContentAlignment="Stretch">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bd" Background="Transparent" Padding="12,8" BorderThickness="0,1,0,0" BorderBrush="{StaticResource SurfaceAltBrush}">
+                                        <StackPanel>
+                                            <TextBlock Text="➕ 新建助手" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                            <TextBlock Text="创建自定义助手" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Opacity="0.7" Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#E8F0FE"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- 助手列表分割器 -->
+                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Cursor="SizeWE">
+                    <GridSplitter.Style>
+                        <Style TargetType="GridSplitter">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#E0E0E0"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </GridSplitter.Style>
+                </GridSplitter>
+
+                <!-- 右侧内容区域：详情 / 对话 切换 -->
+                <Grid Grid.Column="2">
+                    <!-- 详情面板 -->
+                    <Border Background="White" Padding="20">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsChatMode}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
                             </Style>
-                        </ListBox.ItemContainerStyle>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate DataType="{x:Type viewmodels:AssistantListViewModel+AssistantItemViewModel}">
-                                <StackPanel>
+                        </Border.Style>
+
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Visibility="{Binding SelectedAssistant, Converter={StaticResource NullToVisibilityConverter}}">
+                                <!-- 助手基本信息 -->
+                                <StackPanel Margin="0,0,0,24">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-
-                                        <TextBlock Grid.Column="0" Text="{Binding Icon}" FontSize="24" Margin="0,0,10,0"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="0" Text="{Binding SelectedAssistant.Icon}" FontSize="48" Margin="0,0,16,0"/>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding SelectedAssistant.Name}" FontWeight="Bold" FontSize="20" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding SelectedAssistantDetail}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                        </StackPanel>
                                     </Grid>
-
-                                    <TextBlock Text="{Binding ConversationCountText}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="34,4,0,0"/>
                                 </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </Border>
 
-                <!-- 右侧助手详情 -->
-                <Border Grid.Column="1" Padding="20" Background="White">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel Visibility="{Binding SelectedAssistant, Converter={StaticResource NullToVisibilityConverter}}">
-                            <!-- 助手基本信息 -->
-                            <StackPanel Margin="0,0,0,24">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
+                                <!-- 系统提示词 -->
+                                <StackPanel Margin="0,0,0,24">
+                                    <TextBlock Text="系统提示词" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                                    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Background="{StaticResource SurfaceAltBrush}">
+                                        <TextBlock Text="{Binding SelectedAssistant.Assistant.SystemPrompt}" TextWrapping="Wrap" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}" LineHeight="20"/>
+                                    </Border>
+                                </StackPanel>
 
-                                    <TextBlock Grid.Column="0" Text="{Binding SelectedAssistant.Icon}" FontSize="48" Margin="0,0,16,0"/>
+                                <!-- 参数信息 -->
+                                <StackPanel Margin="0,0,0,32">
+                                    <TextBlock Text="参数设置" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,12">
+                                            <TextBlock Text="温度" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding SelectedAssistant.Assistant.Temperature, StringFormat={}{0:F1}}" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,12">
+                                            <TextBlock Text="最大 Token" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding SelectedAssistant.Assistant.MaxTokens}" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="0">
+                                            <TextBlock Text="对话数量" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding SelectedConversationCount}" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="1" Grid.Column="1">
+                                            <TextBlock Text="最后活跃" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding SelectedLastActive}" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
 
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding SelectedAssistant.Name}" FontWeight="Bold" FontSize="20" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="{Binding SelectedAssistantDetail}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
-                                    </StackPanel>
-                                </Grid>
+                                <!-- 底部按钮 -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="删除" Width="80" Height="32" Command="{Binding DeleteAssistantCommand}" Margin="0,0,12,0" Style="{StaticResource DangerButtonStyle}"/>
+                                    <Button Content="编辑" Width="80" Height="32" Command="{Binding EditAssistantCommand}" Margin="0,0,12,0" Style="{StaticResource SecondaryButtonStyle}"/>
+                                    <Button Content="开始对话" Width="80" Height="32" Command="{Binding StartChatCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
+                                </StackPanel>
                             </StackPanel>
+                        </ScrollViewer>
+                    </Border>
 
-                            <!-- 系统提示词 -->
-                            <StackPanel Margin="0,0,0,24">
-                                <TextBlock Text="系统提示词" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                    <!-- 对话面板 -->
+                    <Grid>
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsChatMode}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
 
-                                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Background="{StaticResource SurfaceAltBrush}">
-                                    <TextBlock Text="{Binding SelectedAssistant.Assistant.SystemPrompt}"
-                                               TextWrapping="Wrap"
-                                               FontSize="13"
-                                               Foreground="{StaticResource TextPrimaryBrush}"
-                                               LineHeight="20"/>
-                                </Border>
-                            </StackPanel>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                            <!-- 参数信息 -->
-                            <StackPanel Margin="0,0,0,32">
-                                <TextBlock Text="参数设置" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12"/>
+                        <!-- 对话顶部栏 -->
+                        <Border Grid.Row="0" Padding="12,8" BorderBrush="{StaticResource SurfaceAltBrush}" BorderThickness="0,0,0,1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
 
+                                <Button Grid.Column="0" Command="{Binding CurrentChat.TogglePanelCommand}" Width="32" Height="28"
+                                        Style="{StaticResource SecondaryButtonStyle}" ToolTip="切换对话历史"
+                                        Margin="0,0,8,0" VerticalAlignment="Center">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="&#xE76B;"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CurrentChat.IsPanelVisible}" Value="False">
+                                                        <Setter Property="Text" Value="&#xE76C;"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Button>
+
+                                <TextBlock Grid.Column="1" Text="{Binding CurrentChat.AssistantIcon}" FontSize="18" Margin="0,0,6,0" VerticalAlignment="Center"/>
+
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding CurrentChat.AssistantName}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding CurrentChat.ConversationTitle}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Border Background="{StaticResource SurfaceAltBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,8,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding CurrentChat.ModelInfo}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                    </Border>
+                                    <Button Content="&#xE700;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                            Command="{Binding BackToDetailCommand}" Width="32" Height="28"
+                                            Style="{StaticResource SecondaryButtonStyle}" ToolTip="返回详情"
+                                            VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- 对话内容区域 -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="200" MinWidth="0" MaxWidth="300" x:Name="ConvColumn"/>
+                                <ColumnDefinition Width="4" x:Name="ConvSplitterColumn"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- 对话历史面板 -->
+                            <Border Grid.Column="0" BorderBrush="{StaticResource SurfaceAltBrush}" BorderThickness="0,0,1,0" Background="{StaticResource SurfaceAltBrush}">
                                 <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <!-- 温度 -->
-                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,12">
-                                        <TextBlock Text="温度" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                        <TextBlock Text="{Binding SelectedAssistant.Assistant.Temperature, StringFormat={}{0:F1}}" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold"/>
-                                    </StackPanel>
+                                    <Grid Grid.Row="0" Margin="12,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="对话历史" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="清空" FontSize="10" Padding="6,2" Height="20"
+                                                Command="{Binding CurrentChat.ClearAllConversationsCommand}"
+                                                Cursor="Hand" VerticalAlignment="Center">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="3" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Bd" Property="Background" Value="#FDE8E8"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </Grid>
 
-                                    <!-- 最大 Token -->
-                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,12">
-                                        <TextBlock Text="最大 Token" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                        <TextBlock Text="{Binding SelectedAssistant.Assistant.MaxTokens}" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold"/>
-                                    </StackPanel>
+                                    <Grid Grid.Row="1">
+                                        <ListBox ItemsSource="{Binding CurrentChat.Conversations}"
+                                                 SelectedItem="{Binding CurrentChat.SelectedConversation}"
+                                                 BorderThickness="0"
+                                                 Background="Transparent"
+                                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                 SelectionMode="Single"
+                                                 Visibility="{Binding CurrentChat.Conversations, Converter={StaticResource CollectionEmptyToVisibilityConverter}, ConverterParameter=Invert}">
+                                            <ListBox.Resources>
+                                                <Style TargetType="ScrollBar" BasedOn="{StaticResource HoverScrollBar}"/>
+                                            </ListBox.Resources>
+                                            <ListBox.ItemContainerStyle>
+                                                <Style TargetType="ListBoxItem">
+                                                    <Setter Property="Padding" Value="12,8"/>
+                                                    <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                                    <Setter Property="Margin" Value="0,1"/>
+                                                    <Setter Property="Cursor" Value="Hand"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ListBoxItem">
+                                                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}" Margin="{TemplateBinding Margin}">
+                                                                    <ContentPresenter/>
+                                                                </Border>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsSelected" Value="True">
+                                                                        <Setter Property="Background" Value="{StaticResource PrimaryBgBrush}"/>
+                                                                        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                                                    </Trigger>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Background" Value="#E8F0FE"/>
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </ListBox.ItemContainerStyle>
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <Grid Grid.Row="0">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" Text="{Binding Title}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                            <Button Grid.Column="1" Content="✕" FontSize="10" Width="18" Height="18"
+                                                                    Command="{Binding DataContext.CurrentChat.DeleteConversationCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    Cursor="Hand" VerticalAlignment="Center" Margin="2,0,0,0">
+                                                                <Button.Template>
+                                                                    <ControlTemplate TargetType="Button">
+                                                                        <Border x:Name="Bd" Background="Transparent" CornerRadius="3" Width="18" Height="18">
+                                                                            <TextBlock x:Name="BtnText" Text="✕" FontSize="10" Foreground="#BBBBBB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                        </Border>
+                                                                        <ControlTemplate.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter TargetName="Bd" Property="Background" Value="#FDE8E8"/>
+                                                                                <Setter TargetName="BtnText" Property="Foreground" Value="#DC3545"/>
+                                                                            </Trigger>
+                                                                        </ControlTemplate.Triggers>
+                                                                    </ControlTemplate>
+                                                                </Button.Template>
+                                                            </Button>
+                                                        </Grid>
+                                                        <Grid Grid.Row="1" Margin="0,4,0,0">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" Text="{Binding TimeDisplay}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Opacity="0.7"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding MessageCount, StringFormat={}({0})}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Opacity="0.7" Margin="4,0,0,0"/>
+                                                        </Grid>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
 
-                                    <!-- 对话数量 -->
-                                    <StackPanel Grid.Row="1" Grid.Column="0">
-                                        <TextBlock Text="对话数量" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                        <TextBlock Text="{Binding SelectedConversationCount}" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold"/>
-                                    </StackPanel>
+                                        <TextBlock Text="暂无对话历史" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Visibility="{Binding CurrentChat.Conversations, Converter={StaticResource CollectionEmptyToVisibilityConverter}}"/>
+                                    </Grid>
 
-                                    <!-- 最后活跃 -->
-                                    <StackPanel Grid.Row="1" Grid.Column="1">
-                                        <TextBlock Text="最后活跃" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                        <TextBlock Text="{Binding SelectedLastActive}" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold"/>
-                                    </StackPanel>
+                                    <!-- 新对话 -->
+                                    <Button Grid.Row="2" Command="{Binding CurrentChat.NewConversationCommand}" Cursor="Hand" HorizontalContentAlignment="Stretch">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="Bd" Background="Transparent" Padding="12,8" BorderThickness="0,1,0,0" BorderBrush="{StaticResource SurfaceAltBrush}">
+                                                    <StackPanel>
+                                                        <TextBlock Text="➕ 新对话" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                        <TextBlock Text="开始新的对话" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Opacity="0.7" Margin="0,4,0,0"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="#E8F0FE"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
                                 </Grid>
-                            </StackPanel>
+                            </Border>
 
-                            <!-- 底部按钮 -->
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="删除"
-                                        Width="80"
-                                        Height="32"
-                                        Command="{Binding DeleteAssistantCommand}"
-                                        Margin="0,0,12,0"
-                                        Style="{StaticResource DangerButtonStyle}"/>
+                            <!-- 对话历史分割器 -->
+                            <GridSplitter x:Name="ConvGridSplitter" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Cursor="SizeWE">
+                                <GridSplitter.Style>
+                                    <Style TargetType="GridSplitter">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E0E0E0"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </GridSplitter.Style>
+                            </GridSplitter>
 
-                                <Button Content="编辑"
-                                        Width="80"
-                                        Height="32"
-                                        Command="{Binding EditAssistantCommand}"
-                                        Margin="0,0,12,0"
-                                        Style="{StaticResource SecondaryButtonStyle}"/>
+                            <!-- 聊天消息区域 -->
+                            <Border Grid.Column="2" Padding="16" Background="White">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
 
-                                <Button Content="开始对话"
-                                        Width="80"
-                                        Height="32"
-                                        Command="{Binding StartChatCommand}"
-                                        Style="{StaticResource PrimaryButtonStyle}"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Border>
+                                    <!-- 消息列表 -->
+                                    <ScrollViewer Grid.Row="0" x:Name="ChatMessagesScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <ScrollViewer.Resources>
+                                            <Style TargetType="ScrollBar" BasedOn="{StaticResource HoverScrollBar}"/>
+                                        </ScrollViewer.Resources>
+                                        <Grid>
+                                            <ItemsControl ItemsSource="{Binding CurrentChat.Messages}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,8">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <!-- AI 消息 -->
+                                                            <Border Grid.Column="0" HorizontalAlignment="Left"
+                                                                    Background="#F0F2F5" CornerRadius="12,12,12,2" Padding="4"
+                                                                    MaxWidth="700"
+                                                                    Visibility="{Binding IsAssistant, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsError}" Value="True">
+                                                                                <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}"/>
+                                                                                <Setter Property="BorderThickness" Value="1"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <RichTextBox IsReadOnly="True"
+                                                                             BorderThickness="0"
+                                                                             Background="Transparent"
+                                                                             FontSize="13"
+                                                                             Foreground="{StaticResource TextPrimaryBrush}"
+                                                                             Padding="8,4"
+                                                                             converters:MarkdownHelper.Markdown="{Binding Content, Mode=OneWay}"
+                                                                             VerticalScrollBarVisibility="Disabled"
+                                                                             HorizontalScrollBarVisibility="Disabled"/>
+                                                            </Border>
+
+                                                            <!-- 用户消息 -->
+                                                            <Border Grid.Column="1" HorizontalAlignment="Right"
+                                                                    Background="{StaticResource PrimaryBrush}" CornerRadius="12,12,2,12" Padding="12,8"
+                                                                    MaxWidth="500"
+                                                                    Visibility="{Binding IsUser, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                                <TextBox Text="{Binding Content, Mode=OneWay}" IsReadOnly="True"
+                                                                         TextWrapping="Wrap" FontSize="13" Foreground="White"
+                                                                         BorderThickness="0" Background="Transparent"
+                                                                         Cursor="Arrow" Padding="0"
+                                                                         VerticalScrollBarVisibility="Disabled"
+                                                                         HorizontalScrollBarVisibility="Disabled"/>
+                                                            </Border>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <TextBlock Text="开始新对话，发送消息给助手" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Visibility="{Binding CurrentChat.ShowEmptyState, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        </Grid>
+                                    </ScrollViewer>
+
+                                    <!-- 输入区域 -->
+                                    <Border Grid.Row="1" BorderBrush="{StaticResource SurfaceAltBrush}" BorderThickness="0,1,0,0" Padding="0,12,0,0">
+                                        <StackPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Grid.Column="0" x:Name="ChatInputTextBox" Height="36"
+                                                         Text="{Binding CurrentChat.InputText, UpdateSourceTrigger=PropertyChanged}"
+                                                         VerticalContentAlignment="Center" Padding="12,0" FontSize="13"
+                                                         BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
+                                                         PreviewKeyDown="ChatInputTextBox_PreviewKeyDown"/>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
+                                                    <Button Content="取消" Command="{Binding CurrentChat.CancelSendCommand}" Width="60" Height="36" FontSize="12" Margin="0,0,8,0"
+                                                            Visibility="{Binding CurrentChat.IsSending, Converter={StaticResource BooleanToVisibilityConverter}}" Style="{StaticResource SecondaryButtonStyle}"/>
+                                                    <Button Content="发送" Command="{Binding CurrentChat.SendMessageCommand}" Width="70" Height="36" FontSize="12"
+                                                            IsEnabled="{Binding CurrentChat.IsSending, Converter={StaticResource InverseBooleanConverter}}" Style="{StaticResource PrimaryButtonStyle}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                            <TextBlock Text="Enter 发送 · Esc 取消" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Grid>
             </Grid>
         </Grid>
     </Border>

@@ -26,7 +26,9 @@
 - 🔄 **自动更新** - 支持检查更新和自动下载新版本
 - 📦 **内置词库** - 内置20个四级核心词汇
 - 🌐 **在线词典** - 支持从必应词典获取单词详情
-- 🤖 **AI 翻译** - 支持 AI 翻译功能
+- 🤖 **AI 翻译** - 支持 AI 翻译功能，翻译结果支持复制
+- 💬 **AI 助手** - 自定义 AI 助手，支持多轮对话，Markdown 渲染
+- 📜 **翻译历史** - 翻译记录持久化存储，支持查看历史详情
 - 🖱️ **简单操作** - 鼠标拖动、右键菜单、双击设置
 
 ---
@@ -61,7 +63,7 @@
 
 ### 方式一：安装包（推荐）
 
-下载 [WordReminder-Setup-1.0.6.exe](https://github.com/GoodZheng/WordReminder/releases/download/v1.0.6/WordReminder-Setup-1.0.6.exe) 运行安装程序
+下载 [WordReminder-Setup-1.0.13.exe](https://github.com/GoodZheng/WordReminder/releases/download/v1.0.13/WordReminder-Setup-1.0.13.exe) 运行安装程序
 
 安装程序功能：
 - 图形化安装向导
@@ -72,7 +74,7 @@
 
 ### 方式二：绿色版
 
-下载 [WordReminder-portable-1.0.6.exe](https://github.com/GoodZheng/WordReminder/releases/download/v1.0.6/WordReminder-portable-1.0.6.exe) 直接运行（无需安装）
+下载 [WordReminder-portable-1.0.13.exe](https://github.com/GoodZheng/WordReminder/releases/download/v1.0.13/WordReminder-portable-1.0.13.exe) 直接运行（无需安装）
 
 ---
 
@@ -149,16 +151,27 @@ WordReminder/
 │   ├── AppSettings.cs  # 配置模型
 │   └── HotKey.cs       # 快捷键模型
 ├── ViewModels/          # MVVM 视图模型
+│   ├── MainViewModel.cs         # 主窗口
+│   ├── TranslationViewModel.cs  # 翻译
+│   ├── AssistantListViewModel.cs # 助手管理
+│   ├── AssistantEditViewModel.cs # 助手编辑
+│   └── ChatViewModel.cs         # AI 对话
 ├── Views/               # 视图
 ├── Services/            # 业务逻辑
-│   ├── DatabaseService.cs      # SQLite 操作
-│   ├── ConfigService.cs        # JSON 配置管理
+│   ├── DatabaseService.cs       # SQLite 操作
+│   ├── ConfigService.cs         # JSON 配置管理
+│   ├── AITranslationService.cs  # AI 翻译
+│   ├── AssistantService.cs      # 助手管理
+│   ├── ChatAIService.cs         # AI 对话
+│   ├── ChatService.cs           # 对话存储
 │   ├── BingDictionaryService.cs # 必应词典
-│   ├── HotKeyService.cs        # 全局快捷键
-│   └── WindowManagerService.cs # 窗口管理
+│   ├── HotKeyService.cs         # 全局快捷键
+│   └── WindowManagerService.cs  # 窗口管理
 ├── Messages/            # 消息通信
 ├── Controls/            # 自定义控件
 ├── Converters/          # 值转换器
+├── Styles/              # XAML 样式
+├── Themes/              # 主题资源
 ├── Bootstrapper.cs      # 依赖注入启动
 └── WordReminder.csproj  # 项目文件
 ```
@@ -206,6 +219,24 @@ build.bat
 ---
 
 ## 📝 更新日志
+
+### v1.0.13 (2026-06-04)
+
+- ✨ 助手管理窗口重构为三栏布局，支持内嵌聊天模式
+- ✨ AI 翻译 DeepSeek 兼容，翻译结果页新增 Token 用量显示
+- ✨ 聊天 AI 消息支持 Markdown 渲染
+- ✨ 一键清空对话历史
+- ✨ 窗口标题栏新增最小化按钮
+- 🐛 删除助手时级联清理关联数据
+- 🔧 聊天 Provider/Model 回退逻辑优化
+
+### v1.0.12 (2026-06-02)
+
+- ✨ AI 助手管理：创建、编辑、删除自定义 AI 助手
+- ✨ AI 多轮对话：流式响应、对话历史管理
+- ✨ 翻译历史记录持久化存储，支持分页查询
+- ✨ 翻译结果文本可选择复制
+- 🎨 翻译界面布局优化
 
 ### v1.0.6 (2025-03-22)
 

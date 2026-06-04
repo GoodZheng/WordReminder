@@ -107,13 +107,12 @@ public partial class AssistantEditDialog : Controls.WindowBase
     }
 
     /// <summary>
-    /// 保存按钮点击（通过 Command 处理）
+    /// 保存按钮点击
     /// </summary>
     private void Save_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel.SaveCommand.CanExecute(null))
+        if (_viewModel.TrySave())
         {
-            _viewModel.SaveCommand.Execute(null);
             DialogResult = true;
             Close();
         }

@@ -193,18 +193,50 @@ public class AssistantService
     }
 
     /// <summary>
-    /// 删除助手（级联删除其所有对话）
+    /// 删除助手（级联删除其所有对话和消息）
     /// </summary>
     public bool DeleteAssistant(int id)
     {
         using var connection = new SqliteConnection(_connectionString);
         connection.Open();
 
-        var sql = "DELETE FROM assistants WHERE Id = @Id";
-        using var cmd = new SqliteCommand(sql, connection);
-        cmd.Parameters.AddWithValue("@Id", id);
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            // 删除所有对话的消息
+            var deleteMessagesSql = @"
+                DELETE FROM chat_messages
+                WHERE ConversationId IN (
+                    SELECT Id FROM conversations WHERE AssistantId = @AssistantId
+                )";
+            using (var cmd = new SqliteCommand(deleteMessagesSql, connection, transaction))
+            {
+                cmd.Parameters.AddWithValue("@AssistantId", id);
+                cmd.ExecuteNonQuery();
+            }
 
-        return cmd.ExecuteNonQuery() > 0;
+            // 删除所有对话
+            var deleteConvsSql = "DELETE FROM conversations WHERE AssistantId = @AssistantId";
+            using (var cmd = new SqliteCommand(deleteConvsSql, connection, transaction))
+            {
+                cmd.Parameters.AddWithValue("@AssistantId", id);
+                cmd.ExecuteNonQuery();
+            }
+
+            // 删除助手
+            var deleteSql = "DELETE FROM assistants WHERE Id = @Id";
+            using var cmd2 = new SqliteCommand(deleteSql, connection, transaction);
+            cmd2.Parameters.AddWithValue("@Id", id);
+            var rowsAffected = cmd2.ExecuteNonQuery();
+
+            transaction.Commit();
+            return rowsAffected > 0;
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 
     /// <summary>

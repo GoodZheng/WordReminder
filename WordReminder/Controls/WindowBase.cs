@@ -67,6 +67,15 @@ public class WindowBase : Window
                 Close();
             };
         }
+
+        if (GetTemplateChild("PART_MinimizeButton") is FrameworkElement minimizeButton)
+        {
+            minimizeButton.MouseLeftButtonDown += (s, e) =>
+            {
+                e.Handled = true;
+                WindowState = WindowState.Minimized;
+            };
+        }
     }
 
     protected override void OnSourceInitialized(EventArgs e)

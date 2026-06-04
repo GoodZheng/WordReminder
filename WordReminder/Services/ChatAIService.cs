@@ -33,15 +33,17 @@ public class ChatAIService
         string userMessage,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        var provider = _configService.Settings.AIProviders
-            .FirstOrDefault(p => p.Name == assistant.ProviderName);
+        // 优先使用助手指定的 provider，否则回退到当前激活的 provider
+        var provider = !string.IsNullOrEmpty(assistant.ProviderName)
+            ? _configService.Settings.AIProviders.FirstOrDefault(p => p.Name == assistant.ProviderName)
+            : _configService.GetActiveProvider();
 
         if (provider == null || string.IsNullOrEmpty(provider.ApiKey) || provider.ApiKey == "your-api-key-here")
             throw new InvalidOperationException("AI 未配置，请先在设置中配置 API Key");
 
-        var modelId = assistant.ModelId;
+        var modelId = !string.IsNullOrEmpty(assistant.ModelId) ? assistant.ModelId : _configService.GetActiveModelId();
         if (string.IsNullOrEmpty(modelId))
-            modelId = _configService.GetActiveModelId();
+            throw new InvalidOperationException("未选择模型，请在助手设置中选择模型或配置默认模型");
 
         // 构建消息数组
         var messages = new List<object>();
