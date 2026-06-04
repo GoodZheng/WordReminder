@@ -103,17 +103,17 @@
                                     Margin="5,0,0,0" Height="28" FontSize="12" Style="{StaticResource SecondaryButtonStyle}"/>
                         </Grid>
 
-                        <!-- 窗口置顶 -->
+                        <!-- 显示到最前面 -->
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="100"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="60"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="窗口置顶" VerticalAlignment="Center"/>
+                            <TextBlock Text="显示到最前面" VerticalAlignment="Center"/>
                             <Controls:HotKeyTextBox Grid.Column="1" Height="32" Margin="5,0"
-                                                  HotKey="{Binding ToggleTopmostHotKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <Button Grid.Column="2" Content="清除" Command="{Binding ClearHotKeyCommand}" CommandParameter="ToggleTopmost"
+                                                  HotKey="{Binding BringToFrontHotKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Grid.Column="2" Content="清除" Command="{Binding ClearHotKeyCommand}" CommandParameter="BringToFront"
                                     Margin="5,0,0,0" Height="28" FontSize="12" Style="{StaticResource SecondaryButtonStyle}"/>
                         </Grid>
 
@@ -189,6 +189,7 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <ComboBox ItemsSource="{Binding CurrentModels}"
                                           Text="{Binding SelectedModel, UpdateSourceTrigger=PropertyChanged}"
@@ -196,6 +197,8 @@
                                           Height="32" FontSize="12"/>
                                 <Button Grid.Column="1" Content="+添加" Command="{Binding AddModelCommand}"
                                         Margin="5,0,0,0" Height="28" FontSize="12" Padding="8,0"/>
+                                <Button Grid.Column="2" Content="删除" Command="{Binding DeleteModelCommand}"
+                                        Margin="5,0,0,0" Height="28" FontSize="12" Padding="8,0" Style="{StaticResource DangerButtonStyle}"/>
                             </Grid>
                         </StackPanel>
 

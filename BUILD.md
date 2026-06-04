@@ -103,6 +103,13 @@ installer/
    - `installer/WordReminder-Setup-{版本号}.exe`（推荐）
    - `release/WordReminder-portable-{版本号}.exe`
 
+## 构建规则
+
+- **版本号递增**: 基于 GitHub 上最新**非 Draft** Release 版本号递增。如果最新 Release 是 Draft（未正式发布），则复用该 Draft 的版本号，不递增末位。
+- **工具使用**: 优先使用 GitHub MCP 工具（如 `create_pull_request`、`list_releases`），不使用 `gh` CLI。GitHub MCP 不提供 Release 创建功能，因此 Release 创建由用户手动在 GitHub 上完成。
+- **Claude Code 自动执行**: 构建安装包、推送 tag、创建 PR、生成 Release Notes 等步骤。
+- **用户手动执行**: 在 GitHub Releases 页面上传安装包的 exe 文件并发布。
+
 ## 常见问题
 
 ### 文件被占用无法发布

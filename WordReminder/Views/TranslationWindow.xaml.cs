@@ -17,9 +17,6 @@ public partial class TranslationWindow : Controls.WindowBase
     {
         InitializeComponent();
         DataContext = viewModel;
-
-        // 设置焦点到输入框
-        Loaded += (_, _) => Focus();
     }
 
     // 输入框回车键触发翻译，Shift+Enter 换行

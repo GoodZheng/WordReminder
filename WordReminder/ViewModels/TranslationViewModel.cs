@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -15,6 +17,7 @@ public partial class TranslationViewModel : ViewModelBase
     private readonly AITranslationService _translationService;
     private readonly ConfigService _configService;
     private readonly DatabaseService _databaseService;
+    private readonly TranslationHistoryService _historyService;  // new
 
     [ObservableProperty]
     private string _inputText = string.Empty;
@@ -26,7 +29,18 @@ public partial class TranslationViewModel : ViewModelBase
     private bool _isTranslating;
 
     [ObservableProperty]
+    private string _translateButtonText = "翻译";
+
+    partial void OnIsTranslatingChanged(bool value)
+    {
+        TranslateButtonText = value ? "翻译中" : "翻译";
+    }
+
+    [ObservableProperty]
     private string _loadingText = "请输入文本后点击翻译";
+
+    [ObservableProperty]
+    private string _translationDuration = string.Empty;
 
     [ObservableProperty]
     private bool _showLoading;
@@ -40,14 +54,78 @@ public partial class TranslationViewModel : ViewModelBase
     [ObservableProperty]
     private TranslationResultViewModel? _translationResult;
 
-    public TranslationViewModel(ConfigService configService, AITranslationService translationService, DatabaseService databaseService)
+    // History properties
+    [ObservableProperty]
+    private ObservableCollection<HistoryItemViewModel> _historyItems = new();
+
+    [ObservableProperty]
+    private HistoryItemViewModel? _selectedHistoryItem;
+
+    [ObservableProperty]
+    private int _totalHistoryCount;
+
+    [ObservableProperty]
+    private int _currentPage = 1;
+
+    [ObservableProperty]
+    private int _pageSize = 20;
+
+    public List<int> PageSizeOptions { get; } = [10, 20, 50, 100];
+
+    partial void OnPageSizeChanged(int value)
+    {
+        CurrentPage = 1;
+        LoadHistory();
+    }
+
+    [ObservableProperty]
+    private string _activeModelInfo = string.Empty;
+
+    private void UpdateActiveModelInfo()
+    {
+        var provider = _configService.GetActiveProvider();
+        var modelId = _configService.GetActiveModelId();
+        if (provider != null && !string.IsNullOrEmpty(modelId))
+            ActiveModelInfo = $"{provider.Name}@{modelId}";
+        else
+            ActiveModelInfo = string.Empty;
+    }
+
+    public TranslationViewModel(ConfigService configService, AITranslationService translationService, DatabaseService databaseService, TranslationHistoryService historyService)
     {
         _configService = configService;
         _translationService = translationService;
         _databaseService = databaseService;
+        _historyService = historyService;
 
+        UpdateActiveModelInfo();
         ShowLoading = true;
+        LoadHistory();
     }
+
+    /// <summary>
+    /// 加载历史列表（当前页）
+    /// </summary>
+    private void LoadHistory()
+    {
+        var (items, total) = _historyService.GetPaged(CurrentPage, PageSize);
+        HistoryItems = new ObservableCollection<HistoryItemViewModel>(items.Select(i => new HistoryItemViewModel(i)));
+        TotalHistoryCount = total;
+        OnPropertyChanged(nameof(PageCount));
+        OnPropertyChanged(nameof(ShowHistoryEmpty));
+        PreviousPageCommand.NotifyCanExecuteChanged();
+        NextPageCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// 总页数
+    /// </summary>
+    public int PageCount => (int)Math.Ceiling((double)TotalHistoryCount / PageSize);
+
+    /// <summary>
+    /// 是否没有历史记录
+    /// </summary>
+    public bool ShowHistoryEmpty => HistoryItems.Count == 0;
 
     /// <summary>
     /// 翻译命令
@@ -79,10 +157,19 @@ public partial class TranslationViewModel : ViewModelBase
         ShowError = false;
         ErrorMessage = null;
         StatusText = "正在翻译...";
+        TranslationDuration = string.Empty;
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
 
         try
         {
             var result = await _translationService.TranslateAsync(text);
+            sw.Stop();
+
+            // 显示翻译耗时
+            TranslationDuration = sw.ElapsedMilliseconds >= 1000
+                ? $"耗时 {sw.Elapsed.TotalSeconds:F1}s"
+                : $"耗时 {sw.ElapsedMilliseconds}ms";
 
             if (result != null)
             {
@@ -90,6 +177,30 @@ public partial class TranslationViewModel : ViewModelBase
                 ShowLoading = false;
                 ShowError = false;
                 StatusText = "翻译完成";
+
+                // Save translation history
+                try
+                {
+                    var fullJson = SerializeTranslationResult(result);
+                    var historyId = _historyService.Insert(
+                        inputText: text,
+                        translatedText: result.TranslatedText,
+                        fullJson: fullJson,
+                        textType: result.Type,
+                        direction: result.Direction);
+
+                    // 仅在新记录插入成功时刷新列表
+                    if (historyId > 0)
+                    {
+                        CurrentPage = 1;
+                        LoadHistory();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // History save failure doesn't affect translation display
+                    StatusText = $"翻译完成，但历史保存失败: {ex.Message}";
+                }
             }
             else
             {
@@ -158,6 +269,127 @@ public partial class TranslationViewModel : ViewModelBase
     public bool IsWordInList(string word)
     {
         return _databaseService.WordExists(word);
+    }
+
+    /// <summary>
+    /// 选中历史项
+    /// </summary>
+    [RelayCommand]
+    private void SelectHistory(HistoryItemViewModel item)
+    {
+        if (item == null || string.IsNullOrEmpty(item.FullJson))
+            return;
+
+        try
+        {
+            var jsonDoc = JsonDocument.Parse(item.FullJson);
+            var result = AITranslationService.DeserializeTranslationResult(jsonDoc.RootElement, item.InputText);
+
+            TranslationResult = new TranslationResultViewModel(result);
+            ShowLoading = false;
+            ShowError = false;
+            StatusText = "查看历史记录";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"历史记录数据损坏: {ex.Message}";
+            ShowError = true;
+            ShowLoading = false;
+            StatusText = "查看历史失败";
+        }
+    }
+
+    /// <summary>
+    /// Called when SelectedHistoryItem changes (generated by CommunityToolkit.Mvvm)
+    /// </summary>
+    partial void OnSelectedHistoryItemChanged(HistoryItemViewModel? value)
+    {
+        if (value != null)
+        {
+            SelectHistoryCommand.Execute(value);
+        }
+        else
+        {
+            TranslationResult = null;
+        }
+    }
+
+    partial void OnHistoryItemsChanged(ObservableCollection<HistoryItemViewModel> value)
+    {
+        OnPropertyChanged(nameof(ShowHistoryEmpty));
+        OnPropertyChanged(nameof(CanPreviousPage));
+        OnPropertyChanged(nameof(CanNextPage));
+        PreviousPageCommand.NotifyCanExecuteChanged();
+        NextPageCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// 删除历史项
+    /// </summary>
+    [RelayCommand]
+    private void DeleteHistory(HistoryItemViewModel item)
+    {
+        if (item == null) return;
+
+        _historyService.Delete(item.Id);
+
+        // If deleting currently selected item, clear the right side
+        if (SelectedHistoryItem?.Id == item.Id)
+        {
+            SelectedHistoryItem = null;
+            TranslationResult = null;
+            ShowLoading = true;
+            StatusText = "就绪";
+        }
+
+        LoadHistory();
+        StatusText = "已删除历史记录";
+    }
+
+    /// <summary>
+    /// 上一页
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanPreviousPage))]
+    private void PreviousPage()
+    {
+        if (CurrentPage > 1)
+        {
+            CurrentPage--;
+            SelectedHistoryItem = null;
+            LoadHistory();
+        }
+    }
+
+    /// <summary>
+    /// 下一页
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanNextPage))]
+    private void NextPage()
+    {
+        if (CurrentPage < PageCount)
+        {
+            CurrentPage++;
+            SelectedHistoryItem = null;
+            LoadHistory();
+        }
+    }
+
+    /// <summary>
+    /// CanExecute for PreviousPageCommand
+    /// </summary>
+    public bool CanPreviousPage => CurrentPage > 1;
+
+    /// <summary>
+    /// CanExecute for NextPageCommand
+    /// </summary>
+    public bool CanNextPage => CurrentPage < PageCount;
+
+    /// <summary>
+    /// 将翻译结果序列化为 JSON 存储到数据库
+    /// </summary>
+    private static string SerializeTranslationResult(AITranslationService.TranslationResult result)
+    {
+        return JsonSerializer.Serialize(result);
     }
 }
 

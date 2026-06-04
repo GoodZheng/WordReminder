@@ -411,9 +411,9 @@
     <Style x:Key="SectionSeparator" TargetType="Separator">
         <Setter Property="Height" Value="1"/>
         <Setter Property="Background">
-            <Setter.Value><SolidColorBrush Color="#EDE9FE"/></Setter.Value>
+            <Setter.Value><SolidColorBrush Color="#D0D0D0"/></Setter.Value>
         </Setter>
-        <Setter Property="Margin" Value="0,12"/>
+        <Setter Property="Margin" Value="0,16"/>
     </Style>
 
     <!-- ==================== ContextMenu (Fluent Style) ==================== -->

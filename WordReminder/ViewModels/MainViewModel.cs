@@ -28,6 +28,8 @@ public partial class MainViewModel : ViewModelBase,
     private readonly IServiceProvider _serviceProvider;
     private readonly HotKeyService _hotKeyService;
     private readonly DispatcherTimer _timer;
+    private TranslationWindow? _translationWindow;
+    private AssistantListWindow? _assistantListWindow;
     private readonly DispatcherTimer _savePositionTimer;
 
     [ObservableProperty]
@@ -549,9 +551,34 @@ public partial class MainViewModel : ViewModelBase,
     [RelayCommand]
     private void OpenTranslation()
     {
+        if (_translationWindow != null && _translationWindow.IsLoaded)
+        {
+            _translationWindow.Activate();
+            return;
+        }
+
         var viewModel = _serviceProvider.GetRequiredService<TranslationViewModel>();
-        var window = new TranslationWindow(viewModel);
-        window.ShowDialog();
+        _translationWindow = new TranslationWindow(viewModel);
+        _translationWindow.Show();
+        _translationWindow.Activate();
+    }
+
+    /// <summary>
+    /// 打开助手列表命令
+    /// </summary>
+    [RelayCommand]
+    private void OpenAssistant()
+    {
+        if (_assistantListWindow != null && _assistantListWindow.IsLoaded)
+        {
+            _assistantListWindow.Activate();
+            return;
+        }
+
+        var viewModel = _serviceProvider.GetRequiredService<AssistantListViewModel>();
+        _assistantListWindow = new AssistantListWindow(viewModel);
+        _assistantListWindow.Show();
+        _assistantListWindow.Activate();
     }
 
     /// <summary>
@@ -690,8 +717,8 @@ public partial class MainViewModel : ViewModelBase,
                 case HotKeyAction.Translation:
                     OpenTranslationCommand.Execute(null);
                     break;
-                case HotKeyAction.ToggleTopmost:
-                    AlwaysOnTop = !AlwaysOnTop;
+                case HotKeyAction.BringToFront:
+                    System.Windows.Application.Current.MainWindow?.Activate();
                     break;
             }
         });

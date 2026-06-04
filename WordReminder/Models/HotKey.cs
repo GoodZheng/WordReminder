@@ -161,7 +161,7 @@ public enum HotKeyAction
     Next,
     PlayPause,
     Translation,
-    ToggleTopmost
+    BringToFront
 }
 
 /// <summary>
@@ -181,6 +181,6 @@ public class HotKeySettings
     [JsonPropertyName("translation")]
     public HotKey Translation { get; set; } = new();
 
-    [JsonPropertyName("toggleTopmost")]
-    public HotKey ToggleTopmost { get; set; } = new();
+    [JsonPropertyName("bringToFront")]
+    public HotKey BringToFront { get; set; } = new();
 }
