@@ -587,6 +587,7 @@ public partial class MainViewModel : ViewModelBase,
     [RelayCommand]
     private void Exit()
     {
+        _assistantListWindow?.Close();
         _messenger.Send(new ExitApplicationMessage());
     }
 

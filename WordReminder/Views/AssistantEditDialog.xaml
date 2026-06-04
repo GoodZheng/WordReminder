@@ -193,10 +193,13 @@
 
             <!-- 底部按钮 -->
             <Border Grid.Row="1" BorderBrush="{StaticResource SurfaceAltBrush}" BorderThickness="0,1,0,0" Padding="20,16" Background="{StaticResource SurfaceAltBrush}">
-                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                    <Button Content="取消" Width="80" Height="32" Margin="0,0,12,0" Click="Cancel_Click" Style="{StaticResource SecondaryButtonStyle}"/>
-                    <Button Content="保存" Width="80" Height="32" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
-                </StackPanel>
+                <Grid>
+                    <TextBlock Text="{Binding ValidationMessage}" Foreground="#E74C3C" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="300"/>
+                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                        <Button Content="取消" Width="80" Height="32" Margin="0,0,12,0" Click="Cancel_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="保存" Width="80" Height="32" Click="Save_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                    </StackPanel>
+                </Grid>
             </Border>
         </Grid>
     </Border>

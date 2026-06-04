@@ -29,12 +29,23 @@ public class AITranslationService
     /// </summary>
     public class TranslationResult
     {
-        public string? Text { get; set; }           // 原文
-        public string? TranslatedText { get; set; } // 译文
-        public string? Type { get; set; }           // 类型：word/sentence
-        public string? Direction { get; set; }      // 方向：en2zh/zh2en
-        public List<WordInfo>? WordDetails { get; set; }  // 单词详情
-        public List<TranslationOption>? Options { get; set; }  // 多种翻译选项
+        public string? Text { get; set; }
+        public string? TranslatedText { get; set; }
+        public string? Type { get; set; }
+        public string? Direction { get; set; }
+        public List<WordInfo>? WordDetails { get; set; }
+        public List<TranslationOption>? Options { get; set; }
+        public TokenUsageInfo? TokenUsage { get; set; }
+    }
+
+    /// <summary>
+    /// API Token 消耗信息
+    /// </summary>
+    public class TokenUsageInfo
+    {
+        public int PromptTokens { get; set; }
+        public int CompletionTokens { get; set; }
+        public int TotalTokens { get; set; }
     }
 
     /// <summary>
@@ -88,28 +99,39 @@ public class AITranslationService
             string userPrompt = BuildUserPrompt(text, type, direction);
 
             // 构建请求
-            var requestBody = new
+            var bodyDict = new Dictionary<string, object?>
             {
-                model = modelId,
-                messages = new[]
+                ["model"] = modelId,
+                ["messages"] = new[]
                 {
-                    new
-                    {
-                        role = "system",
-                        content = systemPrompt
-                    },
-                    new
-                    {
-                        role = "user",
-                        content = userPrompt
-                    }
+                    new { role = "system", content = systemPrompt },
+                    new { role = "user", content = userPrompt }
                 },
-                temperature = 0.5,
-                max_tokens = 2000
+                ["temperature"] = 0.5,
+                ["max_tokens"] = 2000
             };
+
+            // DeepSeek V4 模型默认开启思考模式，翻译场景不需要思考，显式关闭
+            bool thinkingDisabled = false;
+            if (IsDeepSeekProvider(config))
+            {
+                bodyDict["thinking"] = new { type = "disabled" };
+                thinkingDisabled = true;
+            }
+
+            var requestBody = bodyDict;
 
             var json = JsonSerializer.Serialize(requestBody);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            // 记录请求参数（不含 API Key，Key 在 Header 中）
+            _logger.LogInformation("=== AI 翻译请求 ===");
+            _logger.LogInformation("  厂商: {Provider}, 模型: {Model}", config.Name, modelId);
+            _logger.LogInformation("  API URL: {Url}", config.ApiUrl);
+            _logger.LogInformation("  DeepSeek思考模式: {ThinkingStatus}",
+                thinkingDisabled ? "已主动关闭 (thinking=disabled)" :
+                IsDeepSeekProvider(config) ? "未设置（默认开启）" : "非DeepSeek，不适用");
+            _logger.LogInformation("  请求体: {RequestBody}", json);
 
             // 设置请求头
             _httpClient.DefaultRequestHeaders.Clear();
@@ -125,8 +147,7 @@ public class AITranslationService
                 _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {config.ApiKey}");
             }
 
-            _logger.LogInformation("正在调用 AI API，类型: {Type}, 方向: {Direction}, URL: {Url}",
-                type, direction, config.ApiUrl);
+            _logger.LogInformation("  文本类型: {Type}, 翻译方向: {Direction}", type, direction);
             _logger.LogDebug("使用 Key: ***{KeySuffix}",
                 config.ApiKey.Length > 4 ? config.ApiKey[^4..] : "****");
 
@@ -134,7 +155,91 @@ public class AITranslationService
             var response = await _httpClient.PostAsync(config.ApiUrl, content);
             var responseBody = await response.Content.ReadAsStringAsync();
 
-            _logger.LogDebug("API 响应状态: {StatusCode}, 响应体: {Body}", response.StatusCode, responseBody);
+            _logger.LogInformation("=== AI 翻译响应 ===");
+            _logger.LogInformation("  HTTP状态: {StatusCode}", response.StatusCode);
+            _logger.LogDebug("  完整响应体: {Body}", responseBody);
+
+            // 检查响应中是否包含思考内容 (DeepSeek 的 reasoning_content)
+            bool hasThinkingContent = false;
+            int thinkingContentLength = 0;
+            TokenUsageInfo? tokenUsage = null;
+            try
+            {
+                var responseJson = JsonSerializer.Deserialize<JsonElement>(responseBody);
+                if (responseJson.TryGetProperty("choices", out var respChoices) &&
+                    respChoices.GetArrayLength() > 0)
+                {
+                    var first = respChoices[0];
+                    if (first.TryGetProperty("message", out var respMsg))
+                    {
+                        // DeepSeek 思考内容字段
+                        if (respMsg.TryGetProperty("reasoning_content", out var reasoning))
+                        {
+                            var reasoningText = reasoning.GetString() ?? "";
+                            thinkingContentLength = reasoningText.Length;
+                            hasThinkingContent = !string.IsNullOrEmpty(reasoningText);
+                            if (hasThinkingContent)
+                            {
+                                _logger.LogInformation("  ⚠ 检测到思考内容 (reasoning_content): {Length} 字符", thinkingContentLength);
+                                _logger.LogDebug("  思考内容: {Reasoning}", reasoningText);
+                            }
+                            else
+                            {
+                                _logger.LogInformation("  ✓ 无思考内容 (reasoning_content 为空)");
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogInformation("  响应中无 reasoning_content 字段（模型未进行思考）");
+                        }
+
+                        // 检查 content 字段
+                        if (respMsg.TryGetProperty("content", out var respContent))
+                        {
+                            var contentText = respContent.GetString() ?? "";
+                            _logger.LogInformation("  翻译结果内容: {Length} 字符", contentText.Length);
+                        }
+                    }
+
+                    // DeepSeek 可能在 choices[0] 级别返回 thinking_finish 等
+                    if (first.TryGetProperty("finish_reason", out var finishReason))
+                    {
+                        _logger.LogInformation("  完成原因: {FinishReason}", finishReason.GetString());
+                    }
+                }
+
+                // 检查 usage/token 信息
+                if (responseJson.TryGetProperty("usage", out var usage))
+                {
+                    var ptVal = 0;
+                    var ctVal = 0;
+                    var ttVal = 0;
+                    if (usage.TryGetProperty("prompt_tokens", out var pt))
+                    {
+                        ptVal = pt.GetInt32();
+                        _logger.LogInformation("  Token使用 - 输入: {PromptTokens}", ptVal);
+                    }
+                    if (usage.TryGetProperty("completion_tokens", out var ct))
+                    {
+                        ctVal = ct.GetInt32();
+                        _logger.LogInformation("  Token使用 - 输出: {CompletionTokens}", ctVal);
+                    }
+                    if (usage.TryGetProperty("total_tokens", out var tt))
+                    {
+                        ttVal = tt.GetInt32();
+                        _logger.LogInformation("  Token使用 - 总计: {TotalTokens}", ttVal);
+                    }
+                    tokenUsage = new TokenUsageInfo
+                    {
+                        PromptTokens = ptVal,
+                        CompletionTokens = ctVal,
+                        TotalTokens = ttVal
+                    };
+                    if (usage.TryGetProperty("reasoning_tokens", out var rt))
+                        _logger.LogInformation("  Token使用 - 思考消耗: {ReasoningTokens}", rt.GetInt32());
+                }
+            }
+            catch { /* 解析用于日志的最佳努力，不应影响主流程 */ }
 
             if (!response.IsSuccessStatusCode)
             {
@@ -179,7 +284,9 @@ public class AITranslationService
             _logger.LogDebug("AI 响应: {Content}", aiContent);
 
             // 解析翻译结果
-            return ParseTranslationResult(aiContent, text, type, direction);
+            var result = ParseTranslationResult(aiContent, text, type, direction);
+            result.TokenUsage = tokenUsage;
+            return result;
         }
         catch (Exception ex)
         {
@@ -503,6 +610,14 @@ public class AITranslationService
         }
 
         return string.Empty;
+    }
+
+    /// <summary>
+    /// 判断是否为 DeepSeek 厂商（通过 API URL 检测）
+    /// </summary>
+    private static bool IsDeepSeekProvider(AIProviderConfig config)
+    {
+        return config.ApiUrl.Contains("deepseek", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

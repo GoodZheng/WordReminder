@@ -80,6 +80,11 @@
                                    FontSize="12"
                                    HorizontalAlignment="Center"
                                    Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding TranslationTokenUsage}"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="11"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,2,0,0"/>
                     </StackPanel>
                 </Grid>
             </StackPanel>

@@ -38,17 +38,28 @@
                                                VerticalAlignment="Center"
                                                Margin="16,0,0,0"/>
 
-                                    <Border x:Name="PART_CloseButton"
-                                            HorizontalAlignment="Right"
-                                            Width="36" Height="36"
-                                            Background="Transparent"
-                                            Cursor="Hand">
-                                        <TextBlock Text="&#x2715;"
-                                                   FontSize="12"
-                                                   Foreground="#888888"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Border x:Name="PART_MinimizeButton"
+                                                Width="36" Height="36"
+                                                Background="Transparent"
+                                                Cursor="Hand">
+                                            <TextBlock Text="&#x2014;"
+                                                       FontSize="14"
+                                                       Foreground="#888888"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                        <Border x:Name="PART_CloseButton"
+                                                Width="36" Height="36"
+                                                Background="Transparent"
+                                                Cursor="Hand">
+                                            <TextBlock Text="&#x2715;"
+                                                       FontSize="12"
+                                                       Foreground="#888888"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                    </StackPanel>
                                 </Grid>
                             </Border>
 
@@ -58,10 +69,13 @@
                     </Border>
 
                     <ControlTemplate.Triggers>
+                        <Trigger SourceName="PART_MinimizeButton" Property="IsMouseOver" Value="True">
+                            <Setter TargetName="PART_MinimizeButton" Property="Background"
+                                    Value="#E5E5E5"/>
+                        </Trigger>
                         <Trigger SourceName="PART_CloseButton" Property="IsMouseOver" Value="True">
                             <Setter TargetName="PART_CloseButton" Property="Background"
                                     Value="{StaticResource CloseButtonHoverBrush}"/>
-                            <Setter TargetName="PART_CloseButton" Property="CornerRadius" Value="0,8,0,0"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

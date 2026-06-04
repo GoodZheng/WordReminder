@@ -133,18 +133,32 @@ public partial class AssistantEditViewModel : ViewModelBase
         }
     }
 
+    [ObservableProperty]
+    private string _validationMessage = string.Empty;
+
     /// <summary>
-    /// 保存命令
+    /// 验证并保存，返回是否成功
     /// </summary>
-    [RelayCommand(CanExecute = nameof(CanSave))]
-    private void Save()
+    public bool TrySave()
     {
+        var missing = new List<string>();
+        if (string.IsNullOrWhiteSpace(Name)) missing.Add("名称");
+        if (string.IsNullOrWhiteSpace(SystemPrompt)) missing.Add("系统提示词");
+
+        if (missing.Count > 0)
+        {
+            ValidationMessage = $"请填写必填项：{string.Join("、", missing)}";
+            return false;
+        }
+
+        ValidationMessage = string.Empty;
+
         var assistant = _originalAssistant ?? new Assistant();
         assistant.Name = Name.Trim();
         assistant.Icon = Icon;
         assistant.SystemPrompt = SystemPrompt.Trim();
-        assistant.ProviderName = string.IsNullOrEmpty(SelectedProviderName) ? null : SelectedProviderName;
-        assistant.ModelId = string.IsNullOrEmpty(SelectedModelId) ? null : SelectedModelId;
+        assistant.ProviderName = string.IsNullOrEmpty(SelectedProviderName) ? "" : SelectedProviderName;
+        assistant.ModelId = string.IsNullOrEmpty(SelectedModelId) ? "" : SelectedModelId;
         assistant.Temperature = Temperature;
         assistant.MaxTokens = MaxTokens;
 
@@ -156,10 +170,16 @@ public partial class AssistantEditViewModel : ViewModelBase
         {
             _assistantService.CreateAssistant(assistant);
         }
+
+        return true;
     }
 
-    /// <summary>
-    /// 判断是否可以保存
-    /// </summary>
-    private bool CanSave() => !string.IsNullOrWhiteSpace(Name) && !string.IsNullOrWhiteSpace(SystemPrompt);
+    partial void OnNameChanged(string value) => ClearValidation();
+    partial void OnSystemPromptChanged(string value) => ClearValidation();
+
+    private void ClearValidation()
+    {
+        if (!string.IsNullOrEmpty(ValidationMessage))
+            ValidationMessage = string.Empty;
+    }
 }

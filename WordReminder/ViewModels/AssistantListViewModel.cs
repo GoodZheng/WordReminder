@@ -16,6 +16,7 @@ public partial class AssistantListViewModel : ViewModelBase
 {
     private readonly AssistantService _assistantService;
     private readonly IServiceProvider _serviceProvider;
+    private readonly ConfigService _configService;
 
     [ObservableProperty]
     private ObservableCollection<AssistantItemViewModel> _assistants = new();
@@ -32,12 +33,20 @@ public partial class AssistantListViewModel : ViewModelBase
     [ObservableProperty]
     private string _selectedLastActive = "从未对话";
 
-    public AssistantListViewModel(AssistantService assistantService, IServiceProvider serviceProvider)
+    [ObservableProperty]
+    private bool _isChatMode;
+
+    [ObservableProperty]
+    private ChatViewModel? _currentChat;
+
+    public AssistantListViewModel(AssistantService assistantService, IServiceProvider serviceProvider, ConfigService configService)
     {
         _assistantService = assistantService;
         _serviceProvider = serviceProvider;
+        _configService = configService;
 
         LoadAssistants();
+        RestoreLayout();
     }
 
     /// <summary>
@@ -72,10 +81,82 @@ public partial class AssistantListViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// 恢复上次关闭时的布局状态
+    /// </summary>
+    private void RestoreLayout()
+    {
+        var settings = _configService.Settings;
+
+        // 恢复选中的助手
+        if (settings.AssistantSelectedId > 0)
+        {
+            var item = Assistants.FirstOrDefault(a => a.Id == settings.AssistantSelectedId);
+            if (item != null)
+            {
+                SelectedAssistant = item;
+            }
+        }
+
+        // 恢复聊天模式
+        if (settings.AssistantIsChatMode && SelectedAssistant != null)
+        {
+            var chatViewModel = _serviceProvider.GetRequiredService<ChatViewModel>();
+
+            if (settings.AssistantConversationId > 0)
+            {
+                var chatService = _serviceProvider.GetRequiredService<ChatService>();
+                var conversation = chatService.GetConversations(SelectedAssistant.Assistant.Id)
+                    .FirstOrDefault(c => c.Id == settings.AssistantConversationId);
+                chatViewModel.Initialize(SelectedAssistant.Assistant, conversation);
+            }
+            else
+            {
+                chatViewModel.Initialize(SelectedAssistant.Assistant);
+            }
+
+            CurrentChat = chatViewModel;
+            IsChatMode = true;
+
+            // 恢复面板折叠状态
+            if (settings.AssistantConvPanelCollapsed)
+            {
+                chatViewModel.IsPanelVisible = false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取当前配置（供 code-behind 读取布局参数）
+    /// </summary>
+    public AppSettings GetSettings() => _configService.Settings;
+
+    /// <summary>
+    /// 保存当前布局状态
+    /// </summary>
+    public void SaveLayout(double assistantListWidth, double convPanelWidth, bool convPanelCollapsed)
+    {
+        _configService.UpdateSettings(settings =>
+        {
+            settings.AssistantSelectedId = SelectedAssistant?.Id ?? 0;
+            settings.AssistantIsChatMode = IsChatMode;
+            settings.AssistantConversationId = CurrentChat?.SelectedConversation?.Id ?? 0;
+            settings.AssistantListWidth = assistantListWidth > 0 ? assistantListWidth : 280;
+            settings.AssistantConvPanelWidth = convPanelWidth > 0 ? convPanelWidth : 200;
+            settings.AssistantConvPanelCollapsed = convPanelCollapsed;
+        });
+    }
+
+    /// <summary>
     /// 当选中助手改变时，更新详情面板
     /// </summary>
     partial void OnSelectedAssistantChanged(AssistantItemViewModel? value)
     {
+        if (IsChatMode)
+        {
+            IsChatMode = false;
+            CurrentChat = null;
+        }
+
         if (value == null)
         {
             SelectedAssistantDetail = string.Empty;
@@ -175,8 +256,16 @@ public partial class AssistantListViewModel : ViewModelBase
 
         var chatViewModel = _serviceProvider.GetRequiredService<ChatViewModel>();
         chatViewModel.Initialize(SelectedAssistant.Assistant);
-        var chatWindow = new ChatWindow(chatViewModel);
-        chatWindow.Show();
+        CurrentChat = chatViewModel;
+        IsChatMode = true;
+    }
+
+    [RelayCommand]
+    private void BackToDetail()
+    {
+        IsChatMode = false;
+        CurrentChat = null;
+        LoadAssistants();
     }
 
     /// <summary>

@@ -51,6 +51,18 @@ public class AppSettings
 
     // 全局快捷键设置
     public HotKeySettings HotKeys { get; set; } = new();
+
+    // 助手窗口布局
+    public int AssistantSelectedId { get; set; }
+    public bool AssistantIsChatMode { get; set; }
+    public int AssistantConversationId { get; set; }
+    public double AssistantListWidth { get; set; } = 280;
+    public double AssistantConvPanelWidth { get; set; } = 200;
+    public bool AssistantConvPanelCollapsed { get; set; }
+
+    // 聊天气泡宽度
+    public double AiBubbleMaxWidth { get; set; } = 480;
+    public double UserBubbleMaxWidth { get; set; } = 450;
 }
 
 /// <summary>

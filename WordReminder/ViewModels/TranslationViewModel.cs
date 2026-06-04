@@ -43,6 +43,9 @@ public partial class TranslationViewModel : ViewModelBase
     private string _translationDuration = string.Empty;
 
     [ObservableProperty]
+    private string _translationTokenUsage = string.Empty;
+
+    [ObservableProperty]
     private bool _showLoading;
 
     [ObservableProperty]
@@ -158,6 +161,7 @@ public partial class TranslationViewModel : ViewModelBase
         ErrorMessage = null;
         StatusText = "正在翻译...";
         TranslationDuration = string.Empty;
+        TranslationTokenUsage = string.Empty;
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
 
@@ -170,6 +174,12 @@ public partial class TranslationViewModel : ViewModelBase
             TranslationDuration = sw.ElapsedMilliseconds >= 1000
                 ? $"耗时 {sw.Elapsed.TotalSeconds:F1}s"
                 : $"耗时 {sw.ElapsedMilliseconds}ms";
+
+            // 显示 Token 消耗
+            var usage = result?.TokenUsage;
+            TranslationTokenUsage = usage != null
+                ? $"Token: 输入 {usage.PromptTokens} · 输出 {usage.CompletionTokens} · 总计 {usage.TotalTokens}"
+                : string.Empty;
 
             if (result != null)
             {

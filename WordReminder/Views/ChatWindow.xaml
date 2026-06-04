@@ -176,26 +176,34 @@
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
 
-                                                <!-- AI 消息（左对齐） -->
+                                                <!-- AI 消息（左对齐，Markdown 渲染） -->
                                                 <Border Grid.Column="0"
                                                         Background="#F0F2F5"
                                                         CornerRadius="12,12,12,2"
-                                                        Padding="12,8"
-                                                        MaxWidth="450"
+                                                        Padding="4"
+                                                        MaxWidth="500"
                                                         HorizontalAlignment="Left"
                                                         Visibility="{Binding IsAssistant, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                    <TextBlock Text="{Binding Content}" TextWrapping="Wrap" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsError}" Value="True">
-                                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
-                                                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsError}" Value="True">
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}"/>
+                                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <RichTextBox IsReadOnly="True"
+                                                                 BorderThickness="0"
+                                                                 Background="Transparent"
+                                                                 FontSize="13"
+                                                                 Foreground="{StaticResource TextPrimaryBrush}"
+                                                                 Padding="8,4"
+                                                                 MaxWidth="492"
+                                                                 converters:MarkdownHelper.Markdown="{Binding Content, Mode=OneWay}"
+                                                                 VerticalScrollBarVisibility="Disabled"
+                                                                 HorizontalScrollBarVisibility="Disabled"/>
                                                 </Border>
 
                                                 <!-- 用户消息（右对齐） -->

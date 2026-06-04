@@ -21,6 +21,7 @@ public partial class ChatViewModel : ViewModelBase
     private CancellationTokenSource? _sendMessageCts;
     private Assistant? _currentAssistant;
     private Conversation? _currentConversation;
+    private bool _isLoadingConversations;
 
     [ObservableProperty]
     private string _assistantName = string.Empty;
@@ -58,6 +59,7 @@ public partial class ChatViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isPanelVisible = true;
 
+
     public ChatViewModel(
         ChatService chatService,
         ChatAIService chatAIService,
@@ -87,6 +89,7 @@ public partial class ChatViewModel : ViewModelBase
             : "使用默认模型";
         ModelInfo = $"{providerInfo} | 温度: {assistant.Temperature:F1}";
 
+
         LoadConversations();
 
         if (conversation != null && Conversations.Any())
@@ -113,13 +116,29 @@ public partial class ChatViewModel : ViewModelBase
     {
         if (_currentAssistant == null) return;
 
-        var conversations = _chatService.GetConversations(_currentAssistant.Id);
-        Conversations.Clear();
-
-        foreach (var conv in conversations)
+        _isLoadingConversations = true;
+        try
         {
-            var messageCount = _chatService.GetMessageCount(conv.Id);
-            Conversations.Add(new ConversationItemViewModel(conv, messageCount));
+            var selectedId = SelectedConversation?.Id;
+            var conversations = _chatService.GetConversations(_currentAssistant.Id);
+            Conversations.Clear();
+
+            foreach (var conv in conversations)
+            {
+                var messageCount = _chatService.GetMessageCount(conv.Id);
+                Conversations.Add(new ConversationItemViewModel(conv, messageCount));
+            }
+
+            if (selectedId.HasValue)
+            {
+                var item = Conversations.FirstOrDefault(c => c.Id == selectedId.Value);
+                if (item != null)
+                    SelectedConversation = item;
+            }
+        }
+        finally
+        {
+            _isLoadingConversations = false;
         }
     }
 
@@ -128,6 +147,8 @@ public partial class ChatViewModel : ViewModelBase
     /// </summary>
     partial void OnSelectedConversationChanged(ConversationItemViewModel? value)
     {
+        if (_isLoadingConversations) return;
+
         if (value == null)
         {
             Messages.Clear();
@@ -204,6 +225,37 @@ public partial class ChatViewModel : ViewModelBase
                 ConversationTitle = string.Empty;
             }
 
+            LoadConversations();
+        }
+    }
+
+    /// <summary>
+    /// 清空所有对话历史
+    /// </summary>
+    [RelayCommand]
+    private void ClearAllConversations()
+    {
+        if (_currentAssistant == null || Conversations.Count == 0) return;
+
+        var result = System.Windows.MessageBox.Show(
+            $"确定要清空助手「{_currentAssistant.Name}」的所有对话历史吗？\n\n共 {Conversations.Count} 个对话将被删除，此操作不可恢复。",
+            "确认清空",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning
+        );
+
+        if (result == MessageBoxResult.Yes)
+        {
+            foreach (var conv in Conversations.ToList())
+            {
+                _chatService.DeleteConversation(conv.Id);
+            }
+
+            Messages.Clear();
+            ShowEmptyState = true;
+            ConversationTitle = string.Empty;
+            _currentConversation = null;
+            SelectedConversation = null;
             LoadConversations();
         }
     }
@@ -387,6 +439,7 @@ public partial class ChatViewModel : ViewModelBase
             SelectedConversation.MessageCount = msgCount;
         }
     }
+
 
     /// <summary>
     /// 对话列表项 ViewModel（内部类）
