@@ -307,10 +307,12 @@ public class AITranslationService
     {
         var trimmedText = text.Trim();
 
-        // 检测是否包含中文字符
-        bool hasChinese = Regex.IsMatch(trimmedText, @"[\u4e00-\u9fa5]");
-        // 检测是否包含英文字母
-        bool hasEnglish = Regex.IsMatch(trimmedText, @"[a-zA-Z]");
+        // 统计中文字符和英文字母的数量，用于判断主体语言
+        int chineseCount = Regex.Matches(trimmedText, @"[\u4e00-\u9fa5]").Count;
+        int englishCount = Regex.Matches(trimmedText, @"[a-zA-Z]").Count;
+
+        bool hasChinese = chineseCount > 0;
+        bool hasEnglish = englishCount > 0;
 
         // 判断是否是单词（英文，不含空格或只有空格分隔的多个词）
         bool isEnglishWord = !hasChinese && !trimmedText.Contains(" ") ||
@@ -324,19 +326,21 @@ public class AITranslationService
         else if (!hasChinese && hasEnglish)
         {
             // 英文 -> 中文
-            if (isEnglishWord)
-            {
-                return ("word", "en2zh");
-            }
-            else
-            {
-                return ("sentence", "en2zh");
-            }
+            return isEnglishWord ? ("word", "en2zh") : ("sentence", "en2zh");
+        }
+        else if (hasChinese && hasEnglish)
+        {
+            // 混合文本（如夹杂英文专有名词的中文句）：判断主体语言，翻译为另一种语言。
+            // 中文占多数，或虽有英文但含 2 个以上汉字（如"打开ChatGPT"），均视为中文主体
+            bool isChineseDominant = chineseCount >= englishCount || chineseCount >= 2;
+            return isChineseDominant
+                ? ("sentence", "zh2en")
+                : ("sentence", "en2zh");
         }
         else
         {
-            // 混合文本，默认视为英文句子翻译为中文
-            return ("sentence", "en2zh");
+            // 无中英文字符（纯数字、符号等），默认中译英
+            return ("sentence", "zh2en");
         }
     }
 
@@ -387,6 +391,7 @@ public class AITranslationService
 1. 准确翻译句子的含义
 2. 从句子中提取 3-5 个较难或不常见的单词
 3. 为每个难词提供音标、词性、释义、例句及例句的中文翻译
+4. 原文可能夹杂中文词汇或专有名词，请将整句含义完整翻译为中文，严禁原样返回原文
 
 只返回 JSON 对象，不要包含其他说明文字。",
 
@@ -408,6 +413,7 @@ public class AITranslationService
 3. 每种翻译要说明其适用的场景，如：日常口语、朋友间对话、非正式场合、正式书面、商务场合等
 4. 优先推荐最常用、最自然的表达方式
 5. 翻译要准确传达原句的含义
+6. 原文可能夹杂英文单词或专有名词（如品牌名、产品名、技术术语），请将整句含义完整翻译为英文，严禁原样返回原文
 
 只返回 JSON 对象，不要包含其他说明文字。",
 
@@ -423,8 +429,8 @@ public class AITranslationService
         return direction switch
         {
             "en2zh" when type == "word" => $"请翻译单词 \"{text}\"，提供其中文释义、音标、词性和例句。",
-            "en2zh" => $"请将以下英文句子翻译为中文，并总结其中的难词：\n\n{text}",
-            "zh2en" => $"请将以下中文句子翻译为英文，提供多种翻译方式：\n\n{text}",
+            "en2zh" => $"请将以下内容翻译为中文，并总结其中的难词：\n\n{text}",
+            "zh2en" => $"请将以下内容翻译为英文，提供多种翻译方式：\n\n{text}",
             _ => $"请翻译：{text}"
         };
     }

@@ -29,7 +29,6 @@ public partial class MainViewModel : ViewModelBase,
     private readonly HotKeyService _hotKeyService;
     private readonly DispatcherTimer _timer;
     private TranslationWindow? _translationWindow;
-    private AssistantListWindow? _assistantListWindow;
     private readonly DispatcherTimer _savePositionTimer;
 
     [ObservableProperty]
@@ -564,30 +563,11 @@ public partial class MainViewModel : ViewModelBase,
     }
 
     /// <summary>
-    /// 打开助手列表命令
-    /// </summary>
-    [RelayCommand]
-    private void OpenAssistant()
-    {
-        if (_assistantListWindow != null && _assistantListWindow.IsLoaded)
-        {
-            _assistantListWindow.Activate();
-            return;
-        }
-
-        var viewModel = _serviceProvider.GetRequiredService<AssistantListViewModel>();
-        _assistantListWindow = new AssistantListWindow(viewModel);
-        _assistantListWindow.Show();
-        _assistantListWindow.Activate();
-    }
-
-    /// <summary>
     /// 退出命令
     /// </summary>
     [RelayCommand]
     private void Exit()
     {
-        _assistantListWindow?.Close();
         _messenger.Send(new ExitApplicationMessage());
     }
 

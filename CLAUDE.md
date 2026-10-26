@@ -8,25 +8,15 @@
 
 ## 已经做的更改
 
-- **AI 消息 Markdown 渲染**: 引入 MdXaml 1.27.0 NuGet 包，新建 `Converters/MarkdownHelper.cs` 附加属性，将 AI 回复从纯文本 TextBlock 改为 RichTextBox + MdXaml 渲染，支持标题、列表、代码块、粗体等 Markdown 格式
-- **用户消息支持复制**: 将用户消息气泡从 TextBlock 改为只读 TextBox，支持文本选择和复制
-- **气泡宽度调整**: AI 气泡 MaxWidth 设为 700px，用户气泡 MaxWidth 设为 500px，确保两者之间有明显间隔
+- **移除 AI 助手模块**: 彻底删除"我的助手"功能（AssistantListWindow、AssistantEditDialog、ChatWindow 及对应的 ViewModel、AssistantService/ChatService/ChatAIService、Assistant/Conversation/ChatMessage 模型、MarkdownHelper、MdXaml 包引用）；同步移除主窗口右键菜单"助手"入口、"打开助手"全局快捷键、助手相关 AppSettings 布局属性、assistants/conversations/chat_messages 数据库建表语句。翻译功能使用的 AiProvider 配置和 AITranslationService 保留
 - **版本升级至 1.0.13**
 
 ### 未提交更改 (feature/fluent-ui 分支)
 
 - **WindowBase 最小化按钮**: 在 `Controls/WindowBase.cs` 和 `Styles/WindowBase.xaml`、`Themes/Generic.xaml` 中为窗口标题栏添加最小化按钮（`PART_MinimizeButton`），包含 Hover 高亮效果
-- **助手管理窗口重构 (`AssistantListWindow`)**: 大幅重构为三栏布局（助手列表 | 聊天区 | 对话列表面板），窗口尺寸从 700x500 调整为 950x600；支持内嵌聊天模式（`IsChatMode`），无需打开独立 ChatWindow 即可直接对话；添加 GridSplitter 可拖拽调整面板宽度；自定义滚动条样式（悬停高亮）；窗口关闭时自动保存/恢复布局状态（面板宽度、选中助手、聊天模式等持久化到 `AppSettings`）
 - **AI 翻译 DeepSeek 兼容**: `AITranslationService` 添加 DeepSeek 模型检测（`IsDeepSeekProvider`），显式发送 `thinking=disabled` 关闭思考模式以减少 Token 消耗；增强请求/响应日志记录（包含 Token usage、reasoning_content 检测等）；新增 `TokenUsageInfo` 模型记录 Prompt/Completion/Total Token 用量
 - **翻译窗口 Token 用量显示**: `TranslationWindow.xaml` 状态栏新增 Token 消耗信息行（输入/输出/总计）；`TranslationViewModel` 新增 `TranslationTokenUsage` 属性
-- **助手删除级联修复**: `AssistantService.DeleteAssistant` 使用事务级联删除 conversations 和 chat_messages，避免孤立数据
-- **聊天服务 Provider 回退逻辑**: `ChatAIService` 优先使用助手指定的 Provider/Model，未指定时回退到全局激活的 Provider 和默认模型
-- **助手编辑验证增强**: `AssistantEditViewModel` 将 `SaveCommand` 重构为 `TrySave()` 方法，添加必填字段校验（名称、系统提示词）和 `ValidationMessage` 属性；`AssistantEditDialog.xaml` 底部显示验证错误信息
-- **聊天功能增强**: `ChatViewModel` 新增 `ClearAllConversations` 命令（清空全部对话历史，带确认对话框）；加载对话时保持选中项状态，避免触发不必要的消息重载；新增 `_isLoadingConversations` 标志防止加载期间触发 `OnSelectedConversationChanged`
-- **AppSettings 布局持久化**: 新增助手窗口布局相关属性（`AssistantSelectedId`、`AssistantIsChatMode`、`AssistantConversationId`、面板宽度等）和聊天气泡宽度配置（`AiBubbleMaxWidth`、`UserBubbleMaxWidth`）
-- **退出时关闭助手窗口**: `MainViewModel.Exit` 时主动关闭 `_assistantListWindow`
 - **新增值转换器**: `BooleanToVisibilityConverter`、`InverseBooleanConverter`、`CollectionEmptyToVisibilityConverter`
-- **ChatWindow AI 气泡 Markdown 渲染**: AI 消息气泡从 TextBlock 改为 RichTextBox + MdXaml，错误消息以红色边框标识
 
 ## 构建与运行命令
 
